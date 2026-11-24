@@ -73,3 +73,21 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 ## D17 — Errori
 - `IExceptionHandler` unico: `ConflictException` → 409, `UnprocessableException` → 422, tutto il resto → 500 generico con `traceId` (il dettaglio va solo nei log). Gli errori SQL attesi (THROW 51xxx, violazioni unique 2627/2601) sono tradotti nel livello dati, non nell'API.
 - Data di completamento futura → 422: è una regola di dominio (D08), non un errore di formato.
+
+## D18 — Parsing XML sicuro
+- `XmlReader` in streaming con `DtdProcessing.Prohibit`, `XmlResolver = null`, `MaxCharactersFromEntities = 0`, `MaxCharactersInDocument` (2 MB), profondità massima 8, e **nessun** `ProcessInlineSchema`/`ProcessSchemaLocation`: è il server a scegliere lo schema, non il file. Gli XSD stessi sono letti con le stesse restrizioni.
+- Le date usano un tipo `CalendarDate` (xs:date senza fuso): `2026-01-31+01:00` è valido per `xs:date` ma ambiguo per una data di calendario.
+- Una riga che non si riesce a interpretare produce sempre un errore (mai scartata in silenzio): questa difesa ha scoperto un bug reale di doppio avanzamento con `ReadElementContentAsString`.
+- Verifica incrociata: gli stessi esempi sono validati anche con `xmllint` (libxml2), che segnala le stesse righe.
+
+## D19 — Import idempotente e transazionale
+- Tre livelli: (1) SHA-256 del file unico in `ImportLogs` → stesso file rifiutato con 409 e riferimento all'import precedente; (2) righe già presenti scartate con motivo "Attestato già registrato" (stesso contenuto in un file diverso non crea duplicati); (3) vincolo unique `(EmployeeId, CourseId, CompletedOn)` come garanzia finale.
+- Righe valide e log in **un'unica transazione** (`usp_Imports_Save`, TVP). Se un import concorrente inserisce le stesse righe tra validazione e salvataggio, la transazione fallisce per intero e la validazione viene ripetuta (max 3 tentativi): coperto da un test con due upload paralleli.
+- Un file che non rispetta l'XSD viene rifiutato per intero (422 con elenco errori per riga) e **non** viene registrato: altrimenti il suo SHA impedirebbe di ricaricarlo dopo la correzione... che avrebbe comunque un hash diverso, ma lo storico si riempirebbe di tentativi falliti.
+- **Aggiunta**: `dryRun=true` restituisce il report riga per riga senza salvare nulla (è l'"anteprima" della schermata di import).
+
+## D20 — Table type con progressivo di riga (V008)
+- La chiave del TVP era il numero di riga del file; un XML scritto su una sola riga lo ripete. Ora la chiave è `RowNumber` (posizione nel file) e `LineNumber` resta per i messaggi. Il tipo è ricreato in una nuova migrazione, non modificando la V004.
+
+## D21 — Rate limiting dell'upload
+- 5 upload al minuto per utente (finestra fissa, configurabile con `RateLimits:UploadsPerMinute`), 429 oltre la soglia. Limite di dimensione 2 MB verificato sia sul corpo multipart sia sul file (413), più `maxAllowedContentLength` in IIS.

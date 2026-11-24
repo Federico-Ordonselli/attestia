@@ -11,17 +11,19 @@ namespace Attestia.Tests.Infrastructure;
 /// Host dell'API in memoria collegato a un database di test reale. L'orologio e' fisso
 /// (15/06/2026, 12:00 a Roma) cosi' gli stati degli attestati sono deterministici.
 /// </summary>
-public sealed class ApiFactory(string connectionString, Action<IServiceCollection>? configure = null) : WebApplicationFactory<Program>
+public sealed class ApiFactory(string connectionString, Action<IServiceCollection>? configure = null, DateTimeOffset? now = null, int uploadsPerMinute = 1000)
+    : WebApplicationFactory<Program>
 {
     public static readonly DateTimeOffset Now = new(2026, 6, 15, 10, 0, 0, TimeSpan.Zero);
 
-    public FakeTimeProvider Time { get; } = new(Now);
+    public FakeTimeProvider Time { get; } = new(now ?? Now);
 
     protected override void ConfigureWebHost(IWebHostBuilder builder)
     {
         builder.UseEnvironment("Testing");
         builder.UseSetting("ConnectionStrings:Attestia", connectionString);
         builder.UseSetting("Database:MigrateOnStartup", "false");
+        builder.UseSetting("RateLimits:UploadsPerMinute", uploadsPerMinute.ToString(System.Globalization.CultureInfo.InvariantCulture));
         builder.ConfigureTestServices(services =>
         {
             services.AddSingleton<TimeProvider>(Time);

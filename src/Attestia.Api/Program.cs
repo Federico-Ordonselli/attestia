@@ -35,6 +35,8 @@ services.AddScoped<ICourseRepository, CourseRepository>();
 services.AddScoped<IEmployeeRepository, EmployeeRepository>();
 services.AddScoped<ICertificateRepository, CertificateRepository>();
 services.AddScoped<IReportRepository, ReportRepository>();
+services.AddScoped<IImportRepository, ImportRepository>();
+services.AddScoped<Attestia.Api.XmlExchange.ImportService>();
 services.AddHostedService<StartupMigrations>();
 
 services.ConfigureHttpJsonOptions(o =>
@@ -65,12 +67,13 @@ var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get
 services.AddCors(o => o.AddDefaultPolicy(p => p.WithOrigins(allowedOrigins).AllowCredentials()
     .WithMethods("GET", "POST", "PUT", "DELETE").WithHeaders("Content-Type", "X-XSRF-TOKEN")));
 
+var uploadsPerMinute = builder.Configuration.GetValue("RateLimits:UploadsPerMinute", 5);
 services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
     o.AddPolicy(RateLimits.Upload, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.User.Identity?.Name ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
-        _ => new FixedWindowRateLimiterOptions { PermitLimit = 5, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
+        _ => new FixedWindowRateLimiterOptions { PermitLimit = uploadsPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));
 });
 
 // --- Pipeline -----------------------------------------------------------------------------------
@@ -100,6 +103,7 @@ api.MapEmployees();
 api.MapCertificates();
 api.MapReports();
 api.MapMe();
+api.MapImportsAndExports();
 
 app.MapGet("/", () => Results.Redirect("/portale/")).AllowAnonymous().ExcludeFromDescription();
 

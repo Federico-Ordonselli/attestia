@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Esempio SCHEMA-VALIDO ma con righe SEMANTICAMENTE ERRATE: le righe valide vengono salvate,
+     le altre finiscono nel report con numero di riga e motivo. -->
+<completions xmlns="urn:attestia:import:v1" exportId="LMS-2026-11-0003" generatedAt="2026-11-20T08:30:00+01:00">
+  <completion>
+    <employeeNumber>E0020</employeeNumber>
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-10</completedOn>
+    <score>81</score>
+  </completion>
+  <completion>
+    <employeeNumber>E9999</employeeNumber> <!-- matricola inesistente -->
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-10</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0021</employeeNumber>
+    <courseCode>INESISTENTE</courseCode> <!-- corso inesistente -->
+    <completedOn>2026-11-10</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0022</employeeNumber>
+    <courseCode>GDPR</courseCode>
+    <completedOn>2099-01-01</completedOn> <!-- data futura -->
+  </completion>
+  <completion>
+    <employeeNumber>E0020</employeeNumber> <!-- duplicato della prima riga -->
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-10</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0059</employeeNumber> <!-- dipendente non piu' attivo -->
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-10</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0023</employeeNumber>
+    <courseCode>ANTINC</courseCode>
+    <completedOn>2026-11-11</completedOn>
+    <score>66.25</score>
+  </completion>
+</completions>

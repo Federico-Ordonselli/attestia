@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Esempio con ERRORI DI SCHEMA: il file viene rifiutato per intero, nessuna riga e' salvata. -->
+<completions xmlns="urn:attestia:import:v1" exportId="LMS-2026-11-0002" generatedAt="2026-11-20T08:30:00+01:00">
+  <completion>
+    <employeeNumber>E0010</employeeNumber>
+    <!-- manca courseCode -->
+    <completedOn>2026-11-12</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0011</employeeNumber>
+    <courseCode>GDPR</courseCode>
+    <completedOn>12/11/2026</completedOn> <!-- formato data non ISO -->
+  </completion>
+  <completion>
+    <employeeNumber>e0012</employeeNumber> <!-- minuscole non ammesse -->
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-12</completedOn>
+    <score>120</score> <!-- fuori intervallo 0-100 -->
+  </completion>
+  <completion>
+    <employeeNumber>E0013</employeeNumber>
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-12</completedOn>
+    <instructor>Non previsto</instructor> <!-- elemento sconosciuto -->
+  </completion>
+</completions>

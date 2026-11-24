@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Esempio VALIDO: tutte le righe superano schema e regole di dominio (con il seed di sviluppo). -->
+<completions xmlns="urn:attestia:import:v1" exportId="LMS-2026-11-0001" generatedAt="2026-11-20T08:30:00+01:00">
+  <completion>
+    <employeeNumber>E0010</employeeNumber>
+    <courseCode>GDPR</courseCode>
+    <completedOn>2026-11-12</completedOn>
+    <score>92.5</score>
+  </completion>
+  <completion>
+    <employeeNumber>E0011</employeeNumber>
+    <courseCode>ANTINC</courseCode>
+    <completedOn>2026-11-13</completedOn>
+  </completion>
+  <completion>
+    <employeeNumber>E0012</employeeNumber>
+    <courseCode>SIC-SPEC</courseCode>
+    <completedOn>2026-11-14</completedOn>
+    <score>78</score>
+  </completion>
+  <completion>
+    <employeeNumber>E0013</employeeNumber>
+    <courseCode>PRIMO-SOC</courseCode>
+    <completedOn>2026-11-18</completedOn>
+    <score>100</score>
+  </completion>
+</completions>

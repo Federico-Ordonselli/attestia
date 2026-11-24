@@ -366,6 +366,41 @@
         }
       }
     },
+    "/api/exports/expirations.xml": {
+      "get": {
+        "tags": [
+          "Import XML"
+        ],
+        "summary": "Export XML (urn:attestia:export:v1) delle scadenze",
+        "parameters": [
+          {
+            "name": "withinDays",
+            "in": "query",
+            "schema": {
+              "maximum": 3650,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 60
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/certificates/{id}": {
       "get": {
         "tags": [
@@ -552,6 +587,87 @@
           },
           "404": {
             "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/imports/certificates": {
+      "post": {
+        "tags": [
+          "Import XML"
+        ],
+        "summary": "Importa i completamenti da un XML dell'LMS (dryRun=true: solo anteprima, nulla viene salvato)",
+        "parameters": [
+          {
+            "name": "dryRun",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "required": [
+                  "file"
+                ],
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "$ref": "#/components/schemas/IFormFile"
+                  }
+                }
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReport"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/imports": {
+      "get": {
+        "tags": [
+          "Import XML"
+        ],
+        "summary": "Storico degli import (ultimi 50)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportLogResponse"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -879,6 +995,221 @@
           }
         }
       },
+      "IFormFile": {
+        "type": "string",
+        "format": "binary"
+      },
+      "ImportLogError": {
+        "required": [
+          "line",
+          "employeeNumber",
+          "courseCode",
+          "completedOn",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "line": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employeeNumber": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "courseCode": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "completedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "ImportLogResponse": {
+        "required": [
+          "id",
+          "fileName",
+          "sha256",
+          "importedAt",
+          "importedBy",
+          "totalRows",
+          "okRows",
+          "rejectedRows",
+          "errors"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "importedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "importedBy": {
+            "type": "string"
+          },
+          "totalRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "okRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rejectedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportLogError"
+            }
+          }
+        }
+      },
+      "ImportReport": {
+        "required": [
+          "dryRun",
+          "fileName",
+          "sha256",
+          "totalRows",
+          "okRows",
+          "rejectedRows",
+          "rows"
+        ],
+        "type": "object",
+        "properties": {
+          "importId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "fileName": {
+            "type": "string"
+          },
+          "sha256": {
+            "type": "string"
+          },
+          "exportId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "totalRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "okRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rejectedRows": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportRowResult"
+            }
+          }
+        }
+      },
+      "ImportRowOutcome": {
+        "enum": [
+          "Imported",
+          "Rejected"
+        ]
+      },
+      "ImportRowResult": {
+        "required": [
+          "lineNumber",
+          "employeeNumber",
+          "courseCode",
+          "completedOn",
+          "outcome"
+        ],
+        "type": "object",
+        "properties": {
+          "lineNumber": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "courseCode": {
+            "type": "string"
+          },
+          "completedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "score": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "outcome": {
+            "$ref": "#/components/schemas/ImportRowOutcome"
+          },
+          "reason": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "status": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/components/schemas/CertificateStatus"
+              }
+            ]
+          }
+        }
+      },
       "MeResponse": {
         "required": [
           "employeeNumber",
@@ -1036,6 +1367,9 @@
     },
     {
       "name": "Scadenze"
+    },
+    {
+      "name": "Import XML"
     },
     {
       "name": "Attestati"
