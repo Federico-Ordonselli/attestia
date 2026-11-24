@@ -1,0 +1,21 @@
+:root { color-scheme: light; }
+body { color: #213344; background: #fff; line-height: 1.55; }
+[hidden] { display: none !important; }
+a { color: #145586; text-decoration: underline; }
+a:focus, button:focus, :focus-visible { outline: 3px solid #085cb3; outline-offset: 3px; }
+.skip-link { position: absolute; left: 1rem; top: -6rem; z-index: 10; padding: .8rem; background: white; }
+.skip-link:focus { top: .5rem; }
+.portal-header { background: #183750; color: #fff; padding: 1.4rem 0; }
+.portal-header .container { display: flex; justify-content: space-between; align-items: center; }
+.portal-header strong { font-size: 1.4em; }
+.portal-header a, .portal-header a:focus { color: #fff; outline-color: #fff; }
+.summary { list-style: none; padding: 0; display: flex; flex-wrap: wrap; gap: 1.4rem; }
+.label { color: #fff; font-size: .9em; }
+.label-success { background-color: #246138; }
+.label-warning { background-color: #775000; }
+.label-danger { background-color: #982f35; }
+.label-default { background-color: #505966; }
+caption, footer { color: #465568; }
+footer { margin-top: 2rem; padding: 1.5rem 0; border-top: 1px solid #c4cdd5; }
+#feedback, #refresh-error { margin: .7rem 0; }
+#refresh-error { color: #902331; }

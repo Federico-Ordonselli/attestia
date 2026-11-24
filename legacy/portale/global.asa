@@ -1,0 +1,6 @@
+<script language="VBScript" runat="server">
+Option Explicit
+Sub Application_OnStart()
+    Application("PortalTitle") = "Il mio storico formazione"
+End Sub
+</script>
