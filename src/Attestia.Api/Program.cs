@@ -3,16 +3,24 @@ using System.Threading.RateLimiting;
 using Attestia.Api.Auth;
 using Attestia.Api.Endpoints;
 using Attestia.Api.Infrastructure;
+using Attestia.Api.Saml;
+using Attestia.Core.Sso;
 using Attestia.Core.Time;
 using Attestia.Data.Infrastructure;
 using Attestia.Data.Repositories;
 using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.DataProtection;
 
 var builder = WebApplication.CreateBuilder(args);
 
 if (MigrateCommand.IsRequested(args))
 {
     return MigrateCommand.Run(builder.Configuration, args);
+}
+
+if (SsoCookieCommand.IsRequested(args))
+{
+    return SsoCookieCommand.Run(builder.Configuration, args);
 }
 
 // --- Logging strutturato: JSON fuori dallo sviluppo -------------------------------------------
@@ -58,9 +66,17 @@ services.AddOpenApi(o => o.AddDocumentTransformer((doc, _, _) =>
 }));
 services.AddHealthChecks().AddCheck<DatabaseHealthCheck>("database");
 
+// --- Sessione SSO (cookie attestia_sso) e Service Provider SAML -----------------------------------
+services.AddSingleton(sp => SsoCookie.FromBase64Key(sp.GetRequiredService<IConfiguration>()[SsoCookie.KeyEnvironmentVariable]));
+var samlOptions = builder.Configuration.GetSection("Saml").Get<SamlOptions>() ?? new SamlOptions();
+services.AddSingleton(samlOptions);
+services.AddHttpClient();
+services.AddSingleton<ISamlConfigurationProvider, MetadataSamlConfigurationProvider>();
+services.AddDataProtection().SetApplicationName("Attestia");
 services.AddAuthentication(AuthSchemes.SsoCookie)
-    .AddScheme<AuthenticationSchemeOptions, NoSessionAuthenticationHandler>(AuthSchemes.SsoCookie, null);
+    .AddScheme<AuthenticationSchemeOptions, SsoCookieAuthenticationHandler>(AuthSchemes.SsoCookie, null);
 services.AddAuthorization(Policies.Configure);
+services.AddCsrfProtection();
 
 // CORS: in produzione tutto e' sulla stessa origine (un solo sito IIS); le origini extra vanno elencate esplicitamente.
 var allowedOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
@@ -92,6 +108,7 @@ app.UseAdminStaticFiles(builder.Configuration);
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();
+app.UseCsrfProtection();
 app.UseRateLimiter();
 
 app.MapOpenApi().AllowAnonymous();
@@ -104,6 +121,8 @@ api.MapCertificates();
 api.MapReports();
 api.MapMe();
 api.MapImportsAndExports();
+
+app.MapSso();
 
 app.MapGet("/", () => Results.Redirect("/portale/")).AllowAnonymous().ExcludeFromDescription();
 

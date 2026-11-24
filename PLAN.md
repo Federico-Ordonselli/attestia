@@ -8,7 +8,7 @@ Stato: ✅ completata · 🔄 in corso · ⏳ da fare
 | 2 | Database: schema, tabella temporale, stored procedure, seed, test di integrazione | ✅ | 31 test di integrazione su MSSQL 2022 (Testcontainers) |
 | 3 | Dominio e API: stato/scadenza, CRUD, scadenze, riepilogo, autorizzazione, OpenAPI | ✅ | 121 test (unit + parità T-SQL/C# + endpoint + autorizzazione) |
 | 4 | Import/export XML: XSD, parser sicuro, import idempotente, export | ✅ | 160 test; anti-XXE, concorrenza, export validato contro XSD |
-| 5 | SAML + SSO: Service Provider, Keycloak, cookie firmato, `/api/me` | ⏳ | |
+| 5 | SAML + SSO: Service Provider, Keycloak, cookie firmato, `/api/me` | ✅ | 207 test; login e logout SAML verificati anche con Keycloak reale |
 | 6 | Angular back-office: schermate, client generato, test, e2e | ⏳ | |
 | 7 | Portale ASP classic: pagine, include, JSON, assets; controlli statici | ⏳ | |
 | 8 | IIS e documentazione: PowerShell, web.config, checklist, README | ⏳ | |

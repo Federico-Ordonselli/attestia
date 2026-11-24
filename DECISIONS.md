@@ -91,3 +91,29 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 
 ## D21 — Rate limiting dell'upload
 - 5 upload al minuto per utente (finestra fissa, configurabile con `RateLimits:UploadsPerMinute`), 429 oltre la soglia. Limite di dimensione 2 MB verificato sia sul corpo multipart sia sul file (413), più `maxAllowedContentLength` in IIS.
+
+## D22 — Libreria SAML: ITfoxtec.Identity.Saml2
+- **Cosa**: ITfoxtec.Identity.Saml2 4.22 (target `net10.0` nativo, rilasci frequenti).
+- **Perché**: espone i messaggi SAML come oggetti (`Saml2AuthnRequest`, `Saml2AuthnResponse`, binding Redirect/POST) senza imporre un middleware di autenticazione: serve proprio questo, perché la sessione non è il cookie di ASP.NET ma il cookie `attestia_sso` condiviso con ASP classic. Permette anche di fare da IdP: i test generano risposte firmate con un certificato in memoria.
+- **Scartate**: Sustainsys.Saml2 v2 (ottima, ma pensata come handler di autenticazione ASP.NET con propria sessione; la v3 non era stabile).
+
+## D23 — Ponte verso ASP classic: cookie `attestia_sso` firmato HMAC
+- **Formato**: `v1|matricola|ruolo|exp|hmac`, HMAC-SHA256 esadecimale minuscolo sui byte UTF-8 del payload, chiave base64 ≥ 32 byte da `ATTESTIA_SSO_KEY`. Verifica a tempo costante, firma controllata **prima** di interpretare il contenuto, scadenza 60 minuti, `HttpOnly; Secure; SameSite=Lax; Path=/`.
+- **Una sola sessione**: lo stesso cookie è anche lo schema di autenticazione dell'API (`SsoCookieAuthenticationHandler`), quindi back-office e portale scadono insieme e il logout vale per entrambi.
+- **Header scritto a mano**: `Response.Cookies.Append` farebbe URL-encoding (`|` → `%7C`) e il portale classic leggerebbe byte diversi da quelli firmati. L'alfabeto del valore è ristretto a `[A-Za-z0-9|-]`.
+- **Vettore di test** calcolato con Python (indipendente da .NET), usato dai test e dalla checklist Windows per verificare l'implementazione VBScript.
+- **Perché non validare SAML in ASP classic**: VBScript non ha una libreria XML-DSig affidabile; validare firme XML (canonicalizzazione, wrapping attack) a mano sarebbe la parte più rischiosa di tutto il progetto. **Alternative valutate**: (a) Shibboleth SP come modulo IIS (robusto, ma un secondo SP da installare e configurare, e la sessione resterebbe separata dall'API); (b) reverse proxy che inietta header di identità (richiede ARR e un canale fidato tra proxy e applicazione); (c) token JWT invece di HMAC (in VBScript servirebbe comunque l'HMAC, con più parsing); (d) sessione lato server condivisa in SQL (stato in più, query a ogni pagina). L'HMAC con chiave condivisa è il minimo indispensabile, verificabile con le classi COM di .NET Framework.
+- ⚠️ **Limite noto**: chi ha la chiave può emettere sessioni; la chiave va trattata come un segreto di produzione (variabile d'ambiente dell'application pool, mai nel repository) e ruotata invalidando tutte le sessioni.
+
+## D24 — Dettagli del Service Provider
+- **InResponseTo**: l'ID dell'AuthnRequest è conservato in un cookie cifrato e a tempo (Data Protection, 10 minuti, `SameSite=None` perché l'ACS riceve un POST cross-site dall'IdP); risposte non sollecitate o per un'altra richiesta sono rifiutate. Firma, audience, issuer, validità temporale e replay sono verificati da ITfoxtec.
+- **Fiducia nel certificato**: pinning del certificato pubblicato nei metadata dell'IdP (Keycloak usa un certificato autofirmato), senza validazione di catena. I metadata sono letti alla prima richiesta e tenuti in cache un'ora.
+- **Autorizzazione al login**: oltre ai claim SAML, la matricola deve esistere ed essere attiva nel database. Il **ruolo** viene dall'IdP (fonte di verità per l'identità); la colonna `Employees.Role` è informativa.
+- **AuthnRequest non firmate** (`saml.client.signature=false` in Keycloak): firmarle richiederebbe un certificato SP da distribuire anche all'IdP; il rischio residuo (richieste di login forgiate) è basso. ⚠️ In produzione si può attivare con un certificato SP.
+- **IdP in HTTP in sviluppo** (`http://localhost:8081`): accettabile solo in locale; la sicurezza delle asserzioni sta nella firma, ma in produzione i metadata vanno letti in HTTPS.
+- **Logout**: chiude il cookie locale e invia una LogoutRequest all'IdP (NameID e SessionIndex salvati in un cookie cifrato sotto `/sso`). Gestisce sia il binding Redirect sia il POST (Keycloak con "force POST binding" usa il POST anche per il logout: scoperto provando con Keycloak reale). La LogoutResponse non viene validata: porta solo a una pagina statica, la sessione locale è già chiusa.
+- **Strumento CLI** `sso-cookie <matricola> <ruolo> [--expires-in s]`: genera cookie validi o scaduti per la checklist manuale. Non è esposto via HTTP.
+
+## D25 — CSRF
+- Tutte le richieste di scrittura su `/api` (JSON e multipart) richiedono `X-XSRF-TOKEN`, il token antiforgery di ASP.NET Core legato all'utente. `/api/me` emette il cookie leggibile `XSRF-TOKEN`, che Angular rimanda automaticamente (supporto XSRF integrato di `HttpClient`). Il middleware gira dopo l'autorizzazione: una richiesta anonima riceve 401, non un errore CSRF. Si somma a `SameSite=Lax` del cookie di sessione.
+- `/sso/acs` è escluso per natura (POST cross-site dall'IdP, protetto dalla firma e da InResponseTo).

@@ -16,7 +16,11 @@ dotnet test -- --filter-not-trait "Category=Integration"   # solo unit test, sen
 cd web/admin && npm test      # test Angular (Vitest)
 cd web/admin && npm run e2e   # Playwright + axe (richiede up, db, api)
 ./dev.sh openapi              # rigenera contracts/openapi/attestia-api.json e il client Angular
+dotnet run --project src/Attestia.Api -- sso-cookie E0001 Employee --expires-in -60   # cookie di prova (scaduto)
+python3 scripts/check_portal.py   # controlli statici del portale ASP classic
 ```
+
+Utenti Keycloak di sviluppo: `dipendente` (E0001, Employee), `hr` (E0002, HR), `admin` (E0003, Admin), password `Dev-Only-Password-1`.
 
 ## Struttura
 
@@ -49,3 +53,6 @@ cd web/admin && npm run e2e   # Playwright + axe (richiede up, db, api)
 - Su Arch/CachyOS servono `dotnet-sdk-10.0`, `aspnet-runtime-10.0` **e** `aspnet-targeting-pack-10.0` (altrimenti NETSDK1226).
 - La porta 8080 e' occupata sulla macchina di sviluppo: Keycloak usa 8081.
 - La generazione OpenAPI a build-time avvia l'host: niente accessi a DB o IdP durante la costruzione dei servizi.
+- Il cookie `attestia_sso` si scrive SOLO con `SsoCookieWriter` (niente `Response.Cookies.Append`: codificherebbe `|`).
+- I test con orologio finto e cookie reali: `CookieContainer` usa l'orologio vero e scarta i cookie con `Expires` passato.
+- `pkill -f Attestia.Api` uccide anche la shell che lo esegue: usare `pgrep -af 'bin/Debug/net10.0/Attestia.Api'`.

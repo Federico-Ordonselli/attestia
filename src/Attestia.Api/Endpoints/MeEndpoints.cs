@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Microsoft.AspNetCore.Antiforgery;
 using Attestia.Api.Auth;
 using Attestia.Core.Models;
 using Attestia.Core.Security;
@@ -14,8 +15,10 @@ internal static class MeEndpoints
     {
         var g = api.MapGroup("/me").WithTags("Utente corrente").RequireAuthorization(Policies.AnyUser);
 
-        g.MapGet("/", async (ClaimsPrincipal user, IEmployeeRepository employees, CancellationToken ct) =>
+        g.MapGet("/", async (HttpContext http, IAntiforgery antiforgery, ClaimsPrincipal user, IEmployeeRepository employees, CancellationToken ct) =>
             {
+                // Angular chiama /api/me all'avvio: e' il momento giusto per emettere il token CSRF.
+                CsrfProtection.IssueToken(http, antiforgery);
                 var number = user.EmployeeNumber();
                 var employee = await employees.GetByNumberAsync(number, ct);
                 var displayName = user.FindFirstValue(AttestiaClaims.DisplayName)

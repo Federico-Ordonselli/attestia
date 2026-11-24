@@ -63,7 +63,9 @@ internal static class ImportEndpoints
                         });
                 }
             })
-            .DisableAntiforgery() // fase 4: la protezione CSRF per tutte le richieste di scrittura arriva con la sessione SSO (fase 5)
+            // La validazione antiforgery integrata per i form e' sostituita da UseCsrfProtection, che copre
+            // con la stessa regola sia il JSON sia il multipart (header X-XSRF-TOKEN obbligatorio).
+            .DisableAntiforgery()
             .WithFormOptions(multipartBodyLengthLimit: ImportService.MaxFileBytes + 64 * 1024)
             .RequireRateLimiting(RateLimits.Upload)
             .ProducesProblem(StatusCodes.Status409Conflict)
