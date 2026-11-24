@@ -133,3 +133,7 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 - Playwright esegue il login SAML vero su Keycloak, naviga, importa un XML (anteprima, conferma, rifiuto del duplicato) e controlla con axe-core le regole WCAG 2.0/2.1 A e AA su cinque schermate. Il file di import ha un `exportId` univoco per esecuzione, quindi il test è ripetibile.
 - Limite: axe trova solo i problemi rilevabili automaticamente (circa un terzo dei criteri WCAG); ordine del focus, comprensibilità dei testi e uso con screen reader richiedono una verifica manuale.
 - Rate limit dell'upload: 429 con ProblemDetails in italiano e `Retry-After`. In sviluppo è a 30 al minuto, perché più giri di e2e ravvicinati superavano il limite di produzione (5).
+
+## D28 — Rotazione delle chiavi dell'IdP
+- Scoperta ricreando il container Keycloak: i metadata in cache contenevano il vecchio certificato e ogni login falliva per "firma non valida" fino alla scadenza della cache (1 ora).
+- Ora, se la firma non è valida, il provider rilegge i metadata e la validazione viene ripetuta **una** volta. Il ricaricamento è concesso al massimo una volta al minuto, così risposte forgiate non possono forzare download continui. Effetto residuo: dopo una rotazione i login possono fallire per al massimo un minuto.

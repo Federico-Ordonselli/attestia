@@ -38,6 +38,8 @@ public sealed class TestIdp : ISamlConfigurationProvider, IDisposable
 
     public static SamlOptions Options { get; } = new() { BaseUrl = "https://localhost", EntityId = "urn:attestia:sp" };
 
+    public bool TryInvalidate() => false;
+
     public Task<Saml2Configuration> GetAsync(CancellationToken ct) =>
         Task.FromResult(MetadataSamlConfigurationProvider.Complete(ServiceProvider, EntityId,
             new Uri("https://idp.example.test/sso"), new Uri("https://idp.example.test/slo"), [X509CertificateLoader.LoadCertificate(Certificate.RawData)]));

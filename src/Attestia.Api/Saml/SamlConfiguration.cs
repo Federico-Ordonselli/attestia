@@ -31,6 +31,12 @@ public interface ISamlConfigurationProvider
     Saml2Configuration ServiceProvider { get; }
 
     Task<Saml2Configuration> GetAsync(CancellationToken ct);
+
+    /// <summary>
+    /// Scarta la configurazione in cache (es. firma non valida dopo una rotazione delle chiavi dell'IdP).
+    /// Restituisce false se l'ultima lettura e' troppo recente: un attaccante non puo' forzare ricaricamenti continui.
+    /// </summary>
+    bool TryInvalidate();
 }
 
 /// <summary>
@@ -41,6 +47,7 @@ internal sealed class MetadataSamlConfigurationProvider(SamlOptions options, IHt
     : ISamlConfigurationProvider, IDisposable
 {
     private static readonly TimeSpan CacheDuration = TimeSpan.FromHours(1);
+    private static readonly TimeSpan MinimumReloadInterval = TimeSpan.FromMinutes(1);
     private readonly SemaphoreSlim _lock = new(1, 1);
     private Saml2Configuration? _cached;
     private DateTimeOffset _loadedAt;
@@ -80,6 +87,17 @@ internal sealed class MetadataSamlConfigurationProvider(SamlOptions options, IHt
         {
             _lock.Release();
         }
+    }
+
+    public bool TryInvalidate()
+    {
+        if (_cached is null || time.GetUtcNow() - _loadedAt < MinimumReloadInterval)
+        {
+            return false;
+        }
+
+        _cached = null;
+        return true;
     }
 
     internal static Saml2Configuration CreateBase(SamlOptions options)

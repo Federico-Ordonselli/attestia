@@ -7,6 +7,7 @@ using Attestia.Core.Sso;
 using Attestia.Data.Repositories;
 using ITfoxtec.Identity.Saml2;
 using ITfoxtec.Identity.Saml2.Claims;
+using ITfoxtec.Identity.Saml2.Cryptography;
 using ITfoxtec.Identity.Saml2.Schemas;
 using ITfoxtec.Identity.Saml2.Schemas.Metadata;
 using Microsoft.AspNetCore.DataProtection;
@@ -84,27 +85,39 @@ internal static partial class SsoEndpoints
 
             http.Response.Cookies.Delete(RequestCookie, new CookieOptions { Path = "/sso", Secure = true, SameSite = SameSiteMode.None });
 
-            var config = await saml.GetAsync(ct);
-            var response = new Saml2AuthnResponse(config);
+            var request = await ToSamlRequest(http.Request, ct);
+            Saml2AuthnResponse response;
             try
             {
-                var request = await ToSamlRequest(http.Request, ct);
-                var binding = new Saml2PostBinding();
-                binding.ReadSamlResponse(request, response);
-                if (response.Status != Saml2StatusCodes.Success)
+                response = Validate(request, await saml.GetAsync(ct));
+            }
+            catch (InvalidSignatureException) when (saml.TryInvalidate())
+            {
+                // Probabile rotazione delle chiavi dell'IdP: si rileggono i metadata e si ritenta UNA volta.
+                MetadataReloaded(logger);
+                try
                 {
-                    AcsRejected(logger, $"stato {response.Status}");
+                    response = Validate(request, await saml.GetAsync(ct));
+                }
+#pragma warning disable CA1031
+                catch (Exception ex)
+#pragma warning restore CA1031
+                {
+                    AcsRejectedWithException(logger, ex.GetType().Name, ex);
                     return LoginFailed();
                 }
-
-                // Firma (risposta o asserzione), audience, issuer, NotBefore/NotOnOrAfter e replay sono verificati qui.
-                binding.Unbind(request, response);
             }
 #pragma warning disable CA1031 // qualunque asserzione non valida deve diventare un rifiuto generico, senza dettagli all'utente
             catch (Exception ex)
 #pragma warning restore CA1031
             {
                 AcsRejectedWithException(logger, ex.GetType().Name, ex);
+                return LoginFailed();
+            }
+
+            if (response.Status != Saml2StatusCodes.Success)
+            {
+                AcsRejected(logger, $"stato {response.Status}");
                 return LoginFailed();
             }
 
@@ -226,6 +239,23 @@ internal static partial class SsoEndpoints
         return app;
     }
 
+    /// <summary>
+    /// Legge e valida la risposta: firma (risposta o asserzione), audience, issuer, NotBefore/NotOnOrAfter e replay.
+    /// Lo stato non Success viene controllato dal chiamante (Unbind non viene eseguito in quel caso).
+    /// </summary>
+    private static Saml2AuthnResponse Validate(ITfoxtec.Identity.Saml2.Http.HttpRequest request, Saml2Configuration config)
+    {
+        var response = new Saml2AuthnResponse(config);
+        var binding = new Saml2PostBinding();
+        binding.ReadSamlResponse(request, response);
+        if (response.Status == Saml2StatusCodes.Success)
+        {
+            binding.Unbind(request, response);
+        }
+
+        return response;
+    }
+
     /// <summary>Solo percorsi locali ("/admin/..."), mai URL assoluti o "//host" (open redirect).</summary>
     internal static string SafeReturnUrl(string? url) =>
         url is { Length: > 0 and < 512 } && url[0] == '/' && !url.StartsWith("//", StringComparison.Ordinal) && !url.StartsWith("/\\", StringComparison.Ordinal)
@@ -315,6 +345,9 @@ internal static partial class SsoEndpoints
 
     [LoggerMessage(Level = LogLevel.Warning, Message = "Messaggio SAML non valido ({ExceptionType})")]
     private static partial void AcsRejectedWithException(ILogger logger, string exceptionType, Exception exception);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Firma SAML non valida con i metadata in cache: metadata dell'IdP ricaricati")]
+    private static partial void MetadataReloaded(ILogger logger);
 
     [LoggerMessage(Level = LogLevel.Information, Message = "Login SSO riuscito per {EmployeeNumber} con ruolo {Role}")]
     private static partial void LoggedIn(ILogger logger, string employeeNumber, string role);
