@@ -1,0 +1,11 @@
+{
+  "$schema": "node_modules/ng-openapi-gen/ng-openapi-gen-schema.json",
+  "input": "../../contracts/openapi/attestia-api.json",
+  "output": "src/app/api/generated",
+  "ignoreUnusedModels": false,
+  "indexFile": true,
+  "removeStaleFiles": true,
+  "enumStyle": "alias",
+  "services": true,
+  "skipJsonSuffix": true
+}

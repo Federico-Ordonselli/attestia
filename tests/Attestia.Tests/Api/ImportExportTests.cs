@@ -210,14 +210,20 @@ public sealed class ImportExportTests(ImportScenario scenario) : IClassFixture<I
         using var limited = new ApiFactory(_cs, now: ImportScenario.Now, uploadsPerMinute: 2);
         using var client = limited.ClientAs("E0030", "HR");
         var statuses = new List<HttpStatusCode>();
+        HttpResponseMessage? last = null;
 
         for (var i = 0; i < 3; i++)
         {
-            using var r = await Upload(client, Encoding.UTF8.GetBytes(Xml($"RL-{i}", ("E9999", "GDPR", "2026-01-01"))), dryRun: true);
-            statuses.Add(r.StatusCode);
+            last?.Dispose();
+            last = await Upload(client, Encoding.UTF8.GetBytes(Xml($"RL-{i}", ("E9999", "GDPR", "2026-01-01"))), dryRun: true);
+            statuses.Add(last.StatusCode);
         }
 
+        var problem = await last!.Content.ReadFromJsonAsync<JsonElement>();
         Assert.Equal([HttpStatusCode.OK, HttpStatusCode.OK, HttpStatusCode.TooManyRequests], statuses);
+        Assert.Equal("60", last.Headers.RetryAfter?.ToString());
+        Assert.Contains("Riprova tra un minuto", problem.GetProperty("detail").GetString(), StringComparison.Ordinal);
+        last.Dispose();
     }
 
     [Fact]

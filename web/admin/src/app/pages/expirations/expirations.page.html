@@ -1,0 +1,83 @@
+<h1 class="h2">Scadenze</h1>
+<p class="text-body-secondary">Attestati già scaduti o in scadenza entro l'orizzonte scelto (solo l'attestato più recente per dipendente e corso).</p>
+
+<form class="row g-3 align-items-end mb-3" (ngSubmit)="applyFilters(+horizon.value, dept.value)" aria-label="Filtri scadenze">
+  <div class="col-sm-4 col-lg-3">
+    <label for="withinDays" class="form-label">Scadenza entro</label>
+    <select id="withinDays" #horizon class="form-select" [value]="filters().withinDays">
+      @for (d of horizonOptions; track d) {
+        <option [value]="d" [selected]="d === filters().withinDays">{{ d === 0 ? 'oggi (solo scaduti e in scadenza oggi)' : d + ' giorni' }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-sm-4 col-lg-3">
+    <label for="department" class="form-label">Reparto</label>
+    <select id="department" #dept class="form-select">
+      <option value="" [selected]="!filters().department">Tutti i reparti</option>
+      @for (d of departments(); track d) {
+        <option [value]="d" [selected]="d === filters().department">{{ d }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-auto">
+    <button type="submit" class="btn btn-primary">Applica filtri</button>
+  </div>
+  <div class="col-auto ms-auto">
+    <a class="btn btn-outline-secondary" [href]="exportUrl()" download>Esporta XML</a>
+  </div>
+</form>
+
+@if (state.loading()) {
+  <app-loading />
+} @else if (state.error(); as error) {
+  <app-error-panel [message]="error" />
+} @else if (state.data(); as result) {
+  <p aria-live="polite" class="mb-2"><strong>{{ result.totalCount }}</strong> attestati trovati.</p>
+  @if (result.items.length === 0) {
+    <app-empty message="Nessun attestato scaduto o in scadenza con questi filtri." />
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <caption>Scadenze (pagina {{ filters().page }} di {{ totalPages() }})</caption>
+        <thead>
+          <tr>
+            <th scope="col">Matricola</th>
+            <th scope="col">Dipendente</th>
+            <th scope="col">Reparto</th>
+            <th scope="col">Corso</th>
+            <th scope="col">Completato il</th>
+            <th scope="col">Scade il</th>
+            <th scope="col" class="text-end">Giorni</th>
+            <th scope="col">Stato</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of result.items; track row.certificateId) {
+            <tr>
+              <td>{{ row.employeeNumber }}</td>
+              <td>{{ row.lastName }} {{ row.firstName }}</td>
+              <td>{{ row.department }}</td>
+              <td>{{ row.courseTitle }} <span class="text-body-secondary small">({{ row.courseCode }})</span></td>
+              <td>{{ row.completedOn | itDate }}</td>
+              <td>{{ row.expiresOn | itDate }}</td>
+              <td class="text-end">{{ row.daysToExpiry }}</td>
+              <td><app-status-badge [status]="row.status" /></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <nav aria-label="Paginazione scadenze">
+      <ul class="pagination">
+        <li class="page-item" [class.disabled]="filters().page <= 1">
+          <button type="button" class="page-link" [disabled]="filters().page <= 1" (click)="goToPage(filters().page - 1)">Precedente</button>
+        </li>
+        <li class="page-item active" aria-current="page"><span class="page-link">Pagina {{ filters().page }} di {{ totalPages() }}</span></li>
+        <li class="page-item" [class.disabled]="filters().page >= totalPages()">
+          <button type="button" class="page-link" [disabled]="filters().page >= totalPages()" (click)="goToPage(filters().page + 1)">Successiva</button>
+        </li>
+      </ul>
+    </nav>
+  }
+}

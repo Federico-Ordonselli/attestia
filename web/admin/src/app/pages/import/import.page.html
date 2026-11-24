@@ -1,0 +1,113 @@
+<h1 class="h2">Import XML dei completamenti</h1>
+<p class="text-body-secondary">File esportato dall'LMS nel formato <code>urn:attestia:import:v1</code> (massimo 2 MB). Prima viene mostrata un'anteprima: nulla è salvato finché non confermi.</p>
+
+<section aria-labelledby="carica" class="card mb-4">
+  <div class="card-body">
+    <h2 id="carica" class="h5">1. Scegli il file</h2>
+    <div class="mb-3">
+      <label for="file" class="form-label">File XML</label>
+      <input id="file" #fileInput type="file" class="form-control" accept=".xml,application/xml,text/xml" (change)="select(fileInput)">
+    </div>
+    <button type="button" class="btn btn-primary" [disabled]="!file() || busy()" (click)="preview()">Anteprima</button>
+    @if (canConfirm()) {
+      <button type="button" class="btn btn-success ms-2" (click)="confirm()">Conferma import di {{ report()!.okRows }} {{ report()!.okRows === 1 ? 'riga' : 'righe' }}</button>
+    }
+  </div>
+</section>
+
+<div aria-live="polite">
+  @if (busy()) { <app-loading label="Elaborazione del file…" /> }
+  @if (error(); as e) {
+    <app-error-panel [message]="e" />
+    @if (schemaErrors().length > 0) {
+      <div class="table-responsive">
+        <table class="table table-sm">
+          <caption>Errori di schema ({{ schemaErrors().length }})</caption>
+          <thead><tr><th scope="col">Riga</th><th scope="col">Colonna</th><th scope="col">Errore</th></tr></thead>
+          <tbody>
+            @for (s of schemaErrors(); track $index) {
+              <tr><td>{{ s.line }}</td><td>{{ s.position }}</td><td>{{ s.message }}</td></tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  @if (report(); as r) {
+    <section aria-labelledby="esito" class="mb-4">
+      <h2 id="esito" class="h5">{{ r.dryRun ? '2. Anteprima dell\'esito' : 'Import completato' }}</h2>
+      <p>
+        <strong>{{ r.fileName }}</strong>: {{ r.totalRows }} righe,
+        <span class="text-success fw-semibold">{{ r.okRows }} {{ r.dryRun ? 'da importare' : 'importate' }}</span>,
+        <span class="text-danger fw-semibold">{{ r.rejectedRows }} scartate</span>.
+        @if (!r.dryRun) { Import n. {{ r.importId }}. }
+      </p>
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <caption>Esito riga per riga</caption>
+          <thead>
+            <tr><th scope="col">Riga</th><th scope="col">Matricola</th><th scope="col">Corso</th><th scope="col">Completato il</th><th scope="col">Esito</th><th scope="col">Motivo / scadenza</th></tr>
+          </thead>
+          <tbody>
+            @for (row of r.rows; track $index) {
+              <tr [class.table-danger]="row.outcome === 'Rejected'">
+                <td>{{ row.lineNumber }}</td>
+                <td>{{ row.employeeNumber }}</td>
+                <td>{{ row.courseCode }}</td>
+                <td>{{ row.completedOn | itDate }}</td>
+                <td>
+                  @if (row.outcome === 'Imported') {
+                    <span class="badge text-bg-success">{{ r.dryRun ? 'Valida' : 'Importata' }}</span>
+                  } @else {
+                    <span class="badge text-bg-danger">Scartata</span>
+                  }
+                </td>
+                <td>
+                  @if (row.reason) { {{ row.reason }} }
+                  @else {
+                    Scade il {{ row.expiresOn | itDate: 'mai' }}
+                    @if (row.status) { <app-status-badge [status]="row.status" /> }
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </section>
+  }
+</div>
+
+<section aria-labelledby="storico">
+  <h2 id="storico" class="h4">Storico import</h2>
+  @if (history.loading()) {
+    <app-loading />
+  } @else if (history.error(); as e) {
+    <app-error-panel [message]="e" />
+  } @else if (history.data(); as logs) {
+    @if (logs.length === 0) {
+      <app-empty message="Nessun import eseguito." />
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-sm align-middle">
+          <caption>Ultimi import</caption>
+          <thead><tr><th scope="col">N.</th><th scope="col">File</th><th scope="col">Data (UTC)</th><th scope="col">Utente</th><th scope="col" class="text-end">Righe</th><th scope="col" class="text-end">Importate</th><th scope="col" class="text-end">Scartate</th></tr></thead>
+          <tbody>
+            @for (log of logs; track log.id) {
+              <tr>
+                <td>{{ log.id }}</td>
+                <td>{{ log.fileName }}</td>
+                <td>{{ log.importedAt | itDate }} {{ log.importedAt.substring(11, 16) }}</td>
+                <td>{{ log.importedBy }}</td>
+                <td class="text-end">{{ log.totalRows }}</td>
+                <td class="text-end">{{ log.okRows }}</td>
+                <td class="text-end">{{ log.rejectedRows }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+</section>

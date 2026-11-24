@@ -15,14 +15,16 @@ internal static class ReportEndpoints
                     [Range(1, 100_000)] int page = 1,
                     [Range(1, 200)] int pageSize = 20) =>
                 TypedResults.Ok(await repo.ExpiringAsync(withinDays, department, page, pageSize, clock.Today, ct)))
-            .WithTags("Scadenze")
+            .WithTags("Reports")
             .RequireAuthorization(Policies.Hr)
+            .WithName("listExpirations")
             .WithSummary("Attestati scaduti o in scadenza entro N giorni (paginazione lato server)");
 
         api.MapGet("/summary/departments", async (IReportRepository repo, IBusinessClock clock, CancellationToken ct) =>
                 TypedResults.Ok(await repo.DepartmentSummaryAsync(clock.Today, ct)))
-            .WithTags("Scadenze")
+            .WithTags("Reports")
             .RequireAuthorization(Policies.Hr)
+            .WithName("getDepartmentSummary")
             .WithSummary("Riepilogo per reparto: validi, in scadenza, scaduti, mancanti obbligatori");
 
         return api;

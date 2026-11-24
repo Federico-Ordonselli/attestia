@@ -1,0 +1,54 @@
+<h1 class="h2">Riepilogo per reparto</h1>
+<p class="text-body-secondary">Situazione degli attestati dei dipendenti attivi, calcolata alla data di oggi.</p>
+
+@if (state.loading()) {
+  <app-loading />
+} @else if (state.error(); as error) {
+  <app-error-panel [message]="error" />
+  <button type="button" class="btn btn-outline-primary" (click)="load()">Riprova</button>
+} @else if (state.data(); as rows) {
+  @if (rows.length === 0) {
+    <app-empty message="Nessun dipendente attivo." />
+  } @else {
+    <section aria-labelledby="totali" class="mb-4">
+      <h2 id="totali" class="visually-hidden">Totali</h2>
+      <div class="row row-cols-2 row-cols-lg-5 g-3">
+        <div class="col"><div class="card h-100"><div class="card-body"><p class="card-text mb-1">Dipendenti</p><p class="h3 mb-0">{{ totals().employees }}</p></div></div></div>
+        <div class="col"><div class="card h-100 border-success"><div class="card-body"><p class="card-text mb-1">Validi</p><p class="h3 mb-0 text-success">{{ totals().valid }}</p></div></div></div>
+        <div class="col"><div class="card h-100 border-warning"><div class="card-body"><p class="card-text mb-1">In scadenza</p><p class="h3 mb-0 text-warning">{{ totals().expiring }}</p></div></div></div>
+        <div class="col"><div class="card h-100 border-danger"><div class="card-body"><p class="card-text mb-1">Scaduti</p><p class="h3 mb-0 text-danger">{{ totals().expired }}</p></div></div></div>
+        <div class="col"><div class="card h-100"><div class="card-body"><p class="card-text mb-1">Obbligatori mancanti</p><p class="h3 mb-0">{{ totals().missing }}</p></div></div></div>
+      </div>
+    </section>
+
+    <div class="table-responsive">
+      <table class="table table-striped align-middle">
+        <caption>Attestati per reparto</caption>
+        <thead>
+          <tr>
+            <th scope="col">Reparto</th>
+            <th scope="col" class="text-end">Dipendenti</th>
+            <th scope="col" class="text-end">Validi</th>
+            <th scope="col" class="text-end">In scadenza</th>
+            <th scope="col" class="text-end">Scaduti</th>
+            <th scope="col" class="text-end">Obbligatori mancanti</th>
+            <th scope="col"><span class="visually-hidden">Azioni</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (row of rows; track row.department) {
+            <tr>
+              <th scope="row">{{ row.department }}</th>
+              <td class="text-end">{{ row.employeeCount }}</td>
+              <td class="text-end">{{ row.validCount }}</td>
+              <td class="text-end">{{ row.expiringSoonCount }}</td>
+              <td class="text-end">{{ row.expiredCount }}</td>
+              <td class="text-end">{{ row.missingCount }}</td>
+              <td><a [routerLink]="['/scadenze']" [queryParams]="{ department: row.department }">Scadenze<span class="visually-hidden"> di {{ row.department }}</span></a></td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

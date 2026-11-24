@@ -9,7 +9,7 @@ Stato: ✅ completata · 🔄 in corso · ⏳ da fare
 | 3 | Dominio e API: stato/scadenza, CRUD, scadenze, riepilogo, autorizzazione, OpenAPI | ✅ | 121 test (unit + parità T-SQL/C# + endpoint + autorizzazione) |
 | 4 | Import/export XML: XSD, parser sicuro, import idempotente, export | ✅ | 160 test; anti-XXE, concorrenza, export validato contro XSD |
 | 5 | SAML + SSO: Service Provider, Keycloak, cookie firmato, `/api/me` | ✅ | 207 test; login e logout SAML verificati anche con Keycloak reale |
-| 6 | Angular back-office: schermate, client generato, test, e2e | ⏳ | |
+| 6 | Angular back-office: schermate, client generato, test, e2e | ✅ | 25 test Vitest, 4 e2e Playwright (SAML reale + axe), lint pulito |
 | 7 | Portale ASP classic: pagine, include, JSON, assets; controlli statici | ⏳ | |
 | 8 | IIS e documentazione: PowerShell, web.config, checklist, README | ⏳ | |
 | 9 | CI e rifinitura: GitHub Actions, audit, pulizia | ⏳ | |

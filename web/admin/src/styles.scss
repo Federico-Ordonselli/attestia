@@ -1,0 +1,69 @@
+// Bootstrap 5 compilato da SCSS, con colori scelti per contrasto WCAG 2.1 AA (>= 4.5:1 sul testo).
+$primary: #1d4f91;
+$success: #146c43;
+$warning: #8a5300; // il giallo di default non raggiunge 4.5:1 con testo bianco
+$danger: #b02a37;
+$secondary: #5c636a;
+$link-decoration: underline;
+// Link della navbar scura: il default (bianco al 55%) non raggiunge 4.5:1 sul blu primario (rilevato da axe).
+$navbar-dark-color: rgba(#fff, .85);
+$navbar-dark-hover-color: #fff;
+$navbar-dark-active-color: #fff;
+$enable-shadows: false;
+$font-family-sans-serif: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+
+// Solo i moduli usati (il bundle completo supera il budget di 500 kB).
+@import "bootstrap/scss/functions";
+@import "bootstrap/scss/variables";
+@import "bootstrap/scss/variables-dark";
+@import "bootstrap/scss/maps";
+@import "bootstrap/scss/mixins";
+@import "bootstrap/scss/utilities";
+@import "bootstrap/scss/root";
+@import "bootstrap/scss/reboot";
+@import "bootstrap/scss/type";
+@import "bootstrap/scss/containers";
+@import "bootstrap/scss/grid";
+@import "bootstrap/scss/tables";
+@import "bootstrap/scss/forms";
+@import "bootstrap/scss/buttons";
+@import "bootstrap/scss/nav";
+@import "bootstrap/scss/navbar";
+@import "bootstrap/scss/card";
+@import "bootstrap/scss/pagination";
+@import "bootstrap/scss/badge";
+@import "bootstrap/scss/alert";
+@import "bootstrap/scss/spinners";
+@import "bootstrap/scss/helpers";
+@import "bootstrap/scss/utilities/api";
+
+// Focus sempre visibile (anche per chi naviga da tastiera su elementi non-form).
+:focus-visible {
+  outline: 3px solid #ffbf47;
+  outline-offset: 2px;
+}
+
+.skip-link {
+  position: absolute;
+  left: -9999px;
+  top: 0;
+  z-index: 2000;
+  padding: .5rem 1rem;
+  background: $primary;
+  color: #fff;
+
+  &:focus {
+    left: .5rem;
+    top: .5rem;
+  }
+}
+
+.table caption {
+  caption-side: top;
+  color: $body-color;
+  font-weight: 600;
+}
+
+main:focus {
+  outline: none;
+}

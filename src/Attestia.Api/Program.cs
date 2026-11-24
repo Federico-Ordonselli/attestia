@@ -57,7 +57,7 @@ services.ConfigureHttpJsonOptions(o =>
 services.AddProblemDetails();
 services.AddExceptionHandler<ExceptionToProblemDetailsHandler>();
 services.AddValidation();
-services.AddOpenApi(o => o.AddDocumentTransformer((doc, _, _) =>
+services.AddOpenApi(o => o.AddSchemaTransformer<RequiredPropertiesSchemaTransformer>().AddDocumentTransformer((doc, _, _) =>
 {
     doc.Info.Title = "Attestia API";
     doc.Info.Version = "v1";
@@ -87,6 +87,20 @@ var uploadsPerMinute = builder.Configuration.GetValue("RateLimits:UploadsPerMinu
 services.AddRateLimiter(o =>
 {
     o.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+    o.OnRejected = async (ctx, ct) =>
+    {
+        ctx.HttpContext.Response.Headers.RetryAfter = "60";
+        await ctx.HttpContext.RequestServices.GetRequiredService<IProblemDetailsService>().WriteAsync(new ProblemDetailsContext
+        {
+            HttpContext = ctx.HttpContext,
+            ProblemDetails = new Microsoft.AspNetCore.Mvc.ProblemDetails
+            {
+                Status = StatusCodes.Status429TooManyRequests,
+                Title = "Troppi caricamenti",
+                Detail = "Hai raggiunto il numero massimo di caricamenti al minuto. Riprova tra un minuto.",
+            },
+        });
+    };
     o.AddPolicy(RateLimits.Upload, ctx => RateLimitPartition.GetFixedWindowLimiter(
         ctx.User.Identity?.Name ?? ctx.Connection.RemoteIpAddress?.ToString() ?? "anon",
         _ => new FixedWindowRateLimiterOptions { PermitLimit = uploadsPerMinute, Window = TimeSpan.FromMinutes(1), QueueLimit = 0 }));

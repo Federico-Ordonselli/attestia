@@ -1,0 +1,48 @@
+<h1 class="h2">Dipendenti</h1>
+
+<form class="row g-3 align-items-end mb-3" role="search" (submit)="$event.preventDefault(); search(q.value, dept.value)">
+  <div class="col-sm-5 col-lg-4">
+    <label for="query" class="form-label">Matricola, nome o cognome</label>
+    <input id="query" #q type="search" class="form-control" maxlength="100" autocomplete="off">
+  </div>
+  <div class="col-sm-4 col-lg-3">
+    <label for="dept" class="form-label">Reparto</label>
+    <select id="dept" #dept class="form-select">
+      <option value="">Tutti i reparti</option>
+      @for (d of departments(); track d) {
+        <option [value]="d">{{ d }}</option>
+      }
+    </select>
+  </div>
+  <div class="col-auto"><button type="submit" class="btn btn-primary">Cerca</button></div>
+</form>
+
+@if (state.loading()) {
+  <app-loading label="Ricerca in corso…" />
+} @else if (state.error(); as error) {
+  <app-error-panel [message]="error" />
+} @else if (state.data(); as rows) {
+  <p aria-live="polite">{{ rows.length }} risultati{{ rows.length === 50 ? ' (mostrati i primi 50: affina la ricerca)' : '' }}.</p>
+  @if (rows.length === 0) {
+    <app-empty message="Nessun dipendente corrisponde alla ricerca." />
+  } @else {
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <caption>Risultati della ricerca</caption>
+        <thead><tr><th scope="col">Matricola</th><th scope="col">Cognome e nome</th><th scope="col">Reparto</th><th scope="col">Stato</th></tr></thead>
+        <tbody>
+          @for (e of rows; track e.employeeNumber) {
+            <tr>
+              <td><a [routerLink]="['/dipendenti', e.employeeNumber]">{{ e.employeeNumber }}</a></td>
+              <td>{{ e.lastName }} {{ e.firstName }}</td>
+              <td>{{ e.department }}</td>
+              <td>{{ e.isActive ? 'Attivo' : 'Non attivo' }}</td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+} @else if (!searched()) {
+  <p class="text-body-secondary">Inserisci un criterio e premi «Cerca» (senza criteri vengono mostrati i primi 50 dipendenti).</p>
+}

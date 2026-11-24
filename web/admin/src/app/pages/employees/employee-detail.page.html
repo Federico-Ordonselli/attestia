@@ -1,0 +1,45 @@
+<p><a routerLink="/dipendenti">← Torna alla ricerca</a></p>
+
+@if (state.loading()) {
+  <app-loading />
+} @else if (state.error(); as error) {
+  <h1 class="h2">Dipendente {{ number() }}</h1>
+  <app-error-panel [message]="error" />
+} @else if (state.data(); as history) {
+  <h1 class="h2">{{ history.employee.lastName }} {{ history.employee.firstName }}</h1>
+  <dl class="row mb-4">
+    <dt class="col-sm-2">Matricola</dt><dd class="col-sm-10">{{ history.employee.employeeNumber }}</dd>
+    <dt class="col-sm-2">Reparto</dt><dd class="col-sm-10">{{ history.employee.department }}</dd>
+    <dt class="col-sm-2">Email</dt><dd class="col-sm-10">{{ history.employee.email }}</dd>
+    <dt class="col-sm-2">Stato</dt><dd class="col-sm-10">{{ history.employee.isActive ? 'Attivo' : 'Non attivo' }}</dd>
+  </dl>
+
+  @if (history.certificates.length === 0) {
+    <app-empty message="Nessun attestato registrato e nessun corso obbligatorio mancante." />
+  } @else {
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <caption>Storico attestati ({{ current().length }} correnti, {{ history.certificates.length - current().length }} superati da un rinnovo)</caption>
+        <thead>
+          <tr><th scope="col">Corso</th><th scope="col">Obbligatorio</th><th scope="col">Completato il</th><th scope="col">Scade il</th><th scope="col" class="text-end">Punteggio</th><th scope="col">Origine</th><th scope="col">Stato</th></tr>
+        </thead>
+        <tbody>
+          @for (c of history.certificates; track $index) {
+            <tr [class.text-body-secondary]="!c.isCurrent">
+              <td>{{ c.courseTitle }} <span class="small">({{ c.courseCode }})</span></td>
+              <td>{{ c.isMandatory ? 'Sì' : 'No' }}</td>
+              <td>{{ c.completedOn | itDate }}</td>
+              <td>{{ c.completedOn ? (c.expiresOn | itDate: 'Non scade') : '—' }}</td>
+              <td class="text-end">{{ c.score ?? '—' }}</td>
+              <td>{{ c.source === 'XmlImport' ? 'Import XML' : c.source === 'Manual' ? 'Manuale' : '—' }}</td>
+              <td>
+                <app-status-badge [status]="c.status" />
+                @if (!c.isCurrent) { <span class="badge text-bg-light border ms-1">Rinnovato</span> }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  }
+}

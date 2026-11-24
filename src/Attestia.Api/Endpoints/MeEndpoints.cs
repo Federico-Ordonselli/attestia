@@ -13,7 +13,7 @@ internal static class MeEndpoints
 {
     public static RouteGroupBuilder MapMe(this RouteGroupBuilder api)
     {
-        var g = api.MapGroup("/me").WithTags("Utente corrente").RequireAuthorization(Policies.AnyUser);
+        var g = api.MapGroup("/me").WithTags("Me").RequireAuthorization(Policies.AnyUser);
 
         g.MapGet("/", async (HttpContext http, IAntiforgery antiforgery, ClaimsPrincipal user, IEmployeeRepository employees, CancellationToken ct) =>
             {
@@ -25,6 +25,7 @@ internal static class MeEndpoints
                     ?? (employee is null ? number : $"{employee.FirstName} {employee.LastName}");
                 return TypedResults.Ok(new MeResponse(number, user.Role(), displayName, employee?.Department));
             })
+            .WithName("getMe")
             .WithSummary("Identità e ruolo dell'utente autenticato (sessione SSO)");
 
         // Un dipendente legge solo i PROPRI attestati: la matricola arriva dal claim, non dalla URL.
@@ -33,6 +34,7 @@ internal static class MeEndpoints
                 await EmployeeEndpoints.LoadHistory(user.EmployeeNumber(), employees, certificates, clock, ct) is { } h
                     ? TypedResults.Ok(h)
                     : TypedResults.NotFound())
+            .WithName("getMyCertificates")
             .WithSummary("Storico attestati dell'utente autenticato");
 
         return api;

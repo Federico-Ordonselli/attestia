@@ -1,0 +1,89 @@
+<h1 class="h2">Corsi</h1>
+
+<div aria-live="polite">
+  @if (message(); as m) { <div class="alert alert-info">{{ m }}</div> }
+</div>
+
+<div class="row g-4">
+  <section class="col-lg-7" aria-labelledby="elenco-corsi">
+    <h2 id="elenco-corsi" class="h4">Elenco</h2>
+    @if (state.loading()) {
+      <app-loading />
+    } @else if (state.error(); as error) {
+      <app-error-panel [message]="error" />
+    } @else if (state.data(); as courses) {
+      @if (courses.length === 0) {
+        <app-empty message="Nessun corso registrato." />
+      } @else {
+        <div class="table-responsive">
+          <table class="table align-middle">
+            <caption>Corsi (inclusi i disattivati)</caption>
+            <thead><tr><th scope="col">Codice</th><th scope="col">Titolo</th><th scope="col">Validità</th><th scope="col">Obbligatorio</th><th scope="col">Stato</th><th scope="col"><span class="visually-hidden">Azioni</span></th></tr></thead>
+            <tbody>
+              @for (c of courses; track c.id) {
+                <tr [class.text-body-secondary]="!c.isActive">
+                  <td>{{ c.code }}</td>
+                  <td>{{ c.title }}<br><span class="small">{{ c.category }}</span></td>
+                  <td>{{ c.validityMonths ? c.validityMonths + ' mesi' : 'Non scade' }}</td>
+                  <td>{{ c.isMandatory ? 'Sì' : 'No' }}</td>
+                  <td>{{ c.isActive ? 'Attivo' : 'Disattivato' }}</td>
+                  <td class="text-nowrap">
+                    <button type="button" class="btn btn-sm btn-outline-primary" (click)="edit(c)">Modifica<span class="visually-hidden"> {{ c.code }}</span></button>
+                    @if (c.isActive) {
+                      @if (confirmingDeactivation() === c.id) {
+                        <button type="button" class="btn btn-sm btn-danger ms-1" (click)="deactivate(c)">Conferma disattivazione</button>
+                        <button type="button" class="btn btn-sm btn-link" (click)="confirmingDeactivation.set(null)">Annulla</button>
+                      } @else {
+                        <button type="button" class="btn btn-sm btn-outline-danger ms-1" (click)="confirmingDeactivation.set(c.id)">Disattiva<span class="visually-hidden"> {{ c.code }}</span></button>
+                      }
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    }
+  </section>
+
+  <section class="col-lg-5" aria-labelledby="form-corso">
+    <h2 id="form-corso" class="h4">{{ editing() ? 'Modifica ' + editing()!.code : 'Nuovo corso' }}</h2>
+    <form [formGroup]="form" (ngSubmit)="save()" novalidate>
+      <div class="mb-3">
+        <label for="code" class="form-label">Codice</label>
+        <input id="code" class="form-control" formControlName="code" [class.is-invalid]="invalid('code')" aria-describedby="code-help code-error" autocomplete="off">
+        <div id="code-help" class="form-text">2–20 caratteri: lettere maiuscole, cifre e trattino. Non modificabile dopo la creazione.</div>
+        @if (invalid('code')) { <div id="code-error" class="invalid-feedback">Codice obbligatorio nel formato indicato.</div> }
+      </div>
+      <div class="mb-3">
+        <label for="title" class="form-label">Titolo</label>
+        <input id="title" class="form-control" formControlName="title" [class.is-invalid]="invalid('title')" aria-describedby="title-error">
+        @if (invalid('title')) { <div id="title-error" class="invalid-feedback">Titolo obbligatorio (3–200 caratteri).</div> }
+      </div>
+      <div class="mb-3">
+        <label for="category" class="form-label">Categoria</label>
+        <input id="category" class="form-control" formControlName="category" [class.is-invalid]="invalid('category')" aria-describedby="category-error">
+        @if (invalid('category')) { <div id="category-error" class="invalid-feedback">Categoria obbligatoria.</div> }
+      </div>
+      <div class="mb-3">
+        <label for="validityMonths" class="form-label">Validità (mesi)</label>
+        <input id="validityMonths" type="number" min="1" max="240" class="form-control" formControlName="validityMonths" [class.is-invalid]="invalid('validityMonths')" aria-describedby="validity-help">
+        <div id="validity-help" class="form-text">Lasciare vuoto se l'attestato non scade.</div>
+      </div>
+      <div class="form-check mb-2">
+        <input id="isMandatory" type="checkbox" class="form-check-input" formControlName="isMandatory">
+        <label for="isMandatory" class="form-check-label">Obbligatorio per tutti i dipendenti</label>
+      </div>
+      @if (editing()) {
+        <div class="form-check mb-3">
+          <input id="isActive" type="checkbox" class="form-check-input" formControlName="isActive">
+          <label for="isActive" class="form-check-label">Attivo</label>
+        </div>
+      }
+      @if (formError(); as e) { <div class="alert alert-danger" role="alert">{{ e }}</div> }
+      <button type="submit" class="btn btn-primary" [disabled]="saving()">{{ editing() ? 'Salva modifiche' : 'Crea corso' }}</button>
+      @if (editing()) { <button type="button" class="btn btn-link" (click)="newCourse()">Annulla</button> }
+    </form>
+  </section>
+</div>

@@ -117,3 +117,19 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 ## D25 — CSRF
 - Tutte le richieste di scrittura su `/api` (JSON e multipart) richiedono `X-XSRF-TOKEN`, il token antiforgery di ASP.NET Core legato all'utente. `/api/me` emette il cookie leggibile `XSRF-TOKEN`, che Angular rimanda automaticamente (supporto XSRF integrato di `HttpClient`). Il middleware gira dopo l'autorizzazione: una richiesta anonima riceve 401, non un errore CSRF. Si somma a `SameSite=Lax` del cookie di sessione.
 - `/sso/acs` è escluso per natura (POST cross-site dall'IdP, protetto dalla firma e da InResponseTo).
+
+## D26 — Back-office Angular
+- **Versione e stile**: Angular 22, componenti standalone, `OnPush`, change detection *zoneless*, signals per lo stato (`LoadState<T>`: dati/caricamento/errore uniformi in tutte le pagine), TypeScript strict, Vitest (runner predefinito di Angular 22).
+- **Client tipizzato generato** con `ng-openapi-gen` da `contracts/openapi/attestia-api.json` (prodotto a build-time dall'API). Per un client pulito l'API dichiara tag in inglese e `operationId` espliciti (`WithName`); uno *schema transformer* marca `required` le proprietà non annullabili, altrimenti ogni campo sarebbe opzionale in TypeScript. `npm run check:api` fallisce se il client non è allineato al contratto.
+- **Stato nell'URL**: filtri e pagina delle scadenze sono parametri di query, quindi la vista si può condividere e il tasto "indietro" funziona.
+- **Interceptor**: l'ordine conta. Gli errori risalgono la catena al contrario, quindi il redirect su 401 sta *dentro* la conversione in `ApiError` (bug trovato da un test unitario).
+- **Import in due passi**: anteprima (`dryRun`) con esito riga per riga, poi conferma esplicita.
+- **Nessun dialog del browser** (`window.confirm`): la disattivazione di un corso usa una conferma inline, accessibile e testabile.
+- **CSP senza `unsafe-inline` per gli script**: l'inlining del CSS critico di Angular genera un `onload` inline ed è disattivato; gli stili inline restano ammessi perché Angular inserisce `<style>` dei componenti a runtime.
+- **Bootstrap 5 da SCSS, solo i moduli usati** (bundle iniziale 461 kB, sotto il budget di 500 kB), con colori corretti per il contrasto AA. Axe ha trovato un problema reale (link della navbar scura al 55% di opacità) ed è stato corretto.
+- **In sviluppo l'API serve `/admin`** dalla build Angular, replicando il layout IIS (stessa origine per cookie e XSRF). Il fallback SPA usa `{**path:nonfile}`: senza il vincolo catturerebbe anche `main.js` (gli endpoint sono risolti prima dei file statici).
+
+## D27 — E2E contro lo stack reale
+- Playwright esegue il login SAML vero su Keycloak, naviga, importa un XML (anteprima, conferma, rifiuto del duplicato) e controlla con axe-core le regole WCAG 2.0/2.1 A e AA su cinque schermate. Il file di import ha un `exportId` univoco per esecuzione, quindi il test è ripetibile.
+- Limite: axe trova solo i problemi rilevabili automaticamente (circa un terzo dei criteri WCAG); ordine del focus, comprensibilità dei testi e uso con screen reader richiedono una verifica manuale.
+- Rate limit dell'upload: 429 con ProblemDetails in italiano e `Retry-After`. In sviluppo è a 30 al minuto, perché più giri di e2e ravvicinati superavano il limite di produzione (5).

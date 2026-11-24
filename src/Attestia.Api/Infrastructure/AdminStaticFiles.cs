@@ -25,7 +25,9 @@ internal static class AdminStaticFiles
         var files = new PhysicalFileProvider(root);
         app.UseStaticFiles(new StaticFileOptions { FileProvider = files, RequestPath = "/admin" });
         // Fallback SPA: le rotte Angular (es. /admin/scadenze) restituiscono index.html.
-        app.MapFallbackToFile("/admin/{**path}", "index.html", new StaticFileOptions { FileProvider = files }).AllowAnonymous();
+        // ":nonfile" e' essenziale: senza, il fallback catturerebbe anche main.js e styles.css (gli endpoint
+        // vengono risolti prima dei file statici e StaticFileMiddleware non serve richieste con un endpoint).
+        app.MapFallbackToFile("/admin/{**path:nonfile}", "index.html", new StaticFileOptions { FileProvider = files }).AllowAnonymous();
         return app;
     }
 }

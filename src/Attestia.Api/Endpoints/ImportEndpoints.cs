@@ -21,7 +21,7 @@ internal static class ImportEndpoints
 
     public static RouteGroupBuilder MapImportsAndExports(this RouteGroupBuilder api)
     {
-        var imports = api.MapGroup("/imports").WithTags("Import XML").RequireAuthorization(Policies.Hr);
+        var imports = api.MapGroup("/imports").WithTags("Imports").RequireAuthorization(Policies.Hr);
 
         imports.MapPost("/certificates", async Task<Results<Ok<ImportReport>, ProblemHttpResult>> (
                     IFormFile file, ClaimsPrincipal user, ImportService service, CancellationToken ct, bool dryRun = false) =>
@@ -69,10 +69,12 @@ internal static class ImportEndpoints
             .WithFormOptions(multipartBodyLengthLimit: ImportService.MaxFileBytes + 64 * 1024)
             .RequireRateLimiting(RateLimits.Upload)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .WithName("importCertificates")
             .WithSummary("Importa i completamenti da un XML dell'LMS (dryRun=true: solo anteprima, nulla viene salvato)");
 
         imports.MapGet("/", async (IImportRepository repo, CancellationToken ct) =>
                 TypedResults.Ok((await repo.ListAsync(50, ct)).Select(ToResponse).ToList()))
+            .WithName("listImports")
             .WithSummary("Storico degli import (ultimi 50)");
 
         api.MapGet("/exports/expirations.xml", async (HttpContext http, IReportRepository repo, IBusinessClock clock, CancellationToken ct,
@@ -84,9 +86,10 @@ internal static class ImportEndpoints
                 http.Response.Headers.ContentDisposition = $"attachment; filename=\"scadenze-{today:yyyy-MM-dd}.xml\"";
                 await ExpirationsXmlWriter.WriteAsync(http.Response.Body, result.Items, clock.UtcNow, today, withinDays, department, ct);
             })
-            .WithTags("Import XML")
+            .WithTags("Imports")
             .RequireAuthorization(Policies.Hr)
             .Produces(StatusCodes.Status200OK, contentType: "application/xml")
+            .WithName("exportExpirationsXml")
             .WithSummary("Export XML (urn:attestia:export:v1) delle scadenze");
 
         return api;

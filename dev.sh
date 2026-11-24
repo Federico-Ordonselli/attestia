@@ -26,7 +26,7 @@ case "${1:-help}" in
   api)     ASPNETCORE_ENVIRONMENT=Development dotnet run --project src/Attestia.Api --launch-profile https ;;
   admin)   (cd web/admin && npm run build -- --watch) ;;
   test)    dotnet test && (cd web/admin && npm test) ;;
-  e2e)     (cd web/admin && npm run e2e) ;;
+  e2e)     (cd web/admin && npm run build && npx playwright test) ;;
   openapi) dotnet build src/Attestia.Api && (cd web/admin && npm run gen:api) ;;
   *)       sed -n '2,11p' "$0" ;;
 esac

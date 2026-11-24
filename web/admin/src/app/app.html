@@ -1,0 +1,34 @@
+<a class="skip-link" href="#contenuto">Vai al contenuto</a>
+
+<header>
+  <nav class="navbar navbar-expand-md navbar-dark bg-primary" aria-label="Navigazione principale">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-semibold" routerLink="/">Attestia <span class="fw-normal">· Back-office HR</span></a>
+      @if (session.user(); as user) {
+        <ul class="navbar-nav me-auto flex-wrap">
+          @if (session.isHr()) {
+            <li class="nav-item"><a class="nav-link" routerLink="/" routerLinkActive="active" ariaCurrentWhenActive="page" [routerLinkActiveOptions]="{ exact: true }">Riepilogo</a></li>
+            <li class="nav-item"><a class="nav-link" routerLink="/scadenze" routerLinkActive="active" ariaCurrentWhenActive="page">Scadenze</a></li>
+            <li class="nav-item"><a class="nav-link" routerLink="/dipendenti" routerLinkActive="active" ariaCurrentWhenActive="page">Dipendenti</a></li>
+            <li class="nav-item"><a class="nav-link" routerLink="/import" routerLinkActive="active" ariaCurrentWhenActive="page">Import XML</a></li>
+          }
+          @if (session.isAdmin()) {
+            <li class="nav-item"><a class="nav-link" routerLink="/corsi" routerLinkActive="active" ariaCurrentWhenActive="page">Corsi</a></li>
+          }
+        </ul>
+        <div class="d-flex align-items-center gap-3 text-white">
+          <span><span class="visually-hidden">Utente: </span>{{ user.displayName }} <span class="badge text-bg-light">{{ user.role }}</span></span>
+          <a class="btn btn-outline-light btn-sm" href="/sso/logout">Esci</a>
+        </div>
+      }
+    </div>
+  </nav>
+</header>
+
+<main id="contenuto" #main tabindex="-1" class="container-fluid py-4">
+  <router-outlet />
+</main>
+
+<footer class="container-fluid border-top py-3 small text-body-secondary">
+  Attestia — progetto dimostrativo con dati fittizi.
+</footer>

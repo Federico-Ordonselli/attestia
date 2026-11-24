@@ -12,6 +12,8 @@ internal static class SecurityHeaders
     public static IApplicationBuilder UseSecurityHeaders(this IApplicationBuilder app) =>
         app.Use(async (context, next) =>
         {
+            // Il path si legge ADESSO: il fallback SPA lo riscrive in /index.html prima che la risposta parta.
+            var isAdmin = context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase);
             context.Response.OnStarting(() =>
             {
                 var h = context.Response.Headers;
@@ -19,7 +21,7 @@ internal static class SecurityHeaders
                 h.XFrameOptions = "DENY";
                 h["Referrer-Policy"] = "no-referrer";
                 h["Cross-Origin-Opener-Policy"] = "same-origin";
-                h.ContentSecurityPolicy = context.Request.Path.StartsWithSegments("/admin", StringComparison.OrdinalIgnoreCase) ? AdminCsp : ApiCsp;
+                h.ContentSecurityPolicy = isAdmin ? AdminCsp : ApiCsp;
                 h.Remove("X-Powered-By");
                 h.Remove("Server");
                 return Task.CompletedTask;

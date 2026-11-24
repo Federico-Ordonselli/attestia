@@ -9,26 +9,28 @@ internal static class CourseEndpoints
 {
     public static RouteGroupBuilder MapCourses(this RouteGroupBuilder api)
     {
-        var g = api.MapGroup("/courses").WithTags("Corsi");
+        var g = api.MapGroup("/courses").WithTags("Courses");
 
         g.MapGet("/", async (ICourseRepository repo, CancellationToken ct, bool includeInactive = false) =>
                 TypedResults.Ok(await repo.ListAsync(includeInactive, ct)))
             .RequireAuthorization(Policies.Hr)
+            .WithName("listCourses")
             .WithSummary("Elenco dei corsi");
 
         g.MapGet("/{id:int}", async Task<Results<Ok<Course>, NotFound>> (int id, ICourseRepository repo, CancellationToken ct) =>
                 await repo.GetAsync(id, ct) is { } c ? TypedResults.Ok(c) : TypedResults.NotFound())
             .RequireAuthorization(Policies.Hr)
-            .WithName("GetCourse")
+            .WithName("getCourse")
             .WithSummary("Dettaglio di un corso");
 
         g.MapPost("/", async (CreateCourseRequest req, ICourseRepository repo, CancellationToken ct) =>
             {
                 var course = await repo.InsertAsync(new CourseInput(req.Code, req.Title.Trim(), req.Category.Trim(), req.ValidityMonths, req.IsMandatory), ct);
-                return TypedResults.CreatedAtRoute(course, "GetCourse", new { id = course.Id });
+                return TypedResults.CreatedAtRoute(course, "getCourse", new { id = course.Id });
             })
             .RequireAuthorization(Policies.Admin)
             .ProducesProblem(StatusCodes.Status409Conflict)
+            .WithName("createCourse")
             .WithSummary("Crea un corso (solo Admin)");
 
         g.MapPut("/{id:int}", async Task<Results<Ok<Course>, NotFound>> (int id, UpdateCourseRequest req, ICourseRepository repo, CancellationToken ct) =>
@@ -36,11 +38,13 @@ internal static class CourseEndpoints
                     ? TypedResults.Ok(c)
                     : TypedResults.NotFound())
             .RequireAuthorization(Policies.Admin)
+            .WithName("updateCourse")
             .WithSummary("Modifica un corso (solo Admin; il codice non cambia)");
 
         g.MapDelete("/{id:int}", async Task<Results<NoContent, NotFound>> (int id, ICourseRepository repo, CancellationToken ct) =>
                 await repo.DeactivateAsync(id, ct) ? TypedResults.NoContent() : TypedResults.NotFound())
             .RequireAuthorization(Policies.Admin)
+            .WithName("deactivateCourse")
             .WithSummary("Disattiva un corso (solo Admin). Gli attestati esistenti restano.");
 
         return api;

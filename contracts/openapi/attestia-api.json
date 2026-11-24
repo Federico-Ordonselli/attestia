@@ -9,9 +9,10 @@
     "/api/courses": {
       "get": {
         "tags": [
-          "Corsi"
+          "Courses"
         ],
         "summary": "Elenco dei corsi",
+        "operationId": "listCourses",
         "parameters": [
           {
             "name": "includeInactive",
@@ -40,9 +41,10 @@
       },
       "post": {
         "tags": [
-          "Corsi"
+          "Courses"
         ],
         "summary": "Crea un corso (solo Admin)",
+        "operationId": "createCourse",
         "requestBody": {
           "content": {
             "application/json": {
@@ -80,10 +82,10 @@
     "/api/courses/{id}": {
       "get": {
         "tags": [
-          "Corsi"
+          "Courses"
         ],
         "summary": "Dettaglio di un corso",
-        "operationId": "GetCourse",
+        "operationId": "getCourse",
         "parameters": [
           {
             "name": "id",
@@ -113,9 +115,10 @@
       },
       "put": {
         "tags": [
-          "Corsi"
+          "Courses"
         ],
         "summary": "Modifica un corso (solo Admin; il codice non cambia)",
+        "operationId": "updateCourse",
         "parameters": [
           {
             "name": "id",
@@ -155,9 +158,10 @@
       },
       "delete": {
         "tags": [
-          "Corsi"
+          "Courses"
         ],
         "summary": "Disattiva un corso (solo Admin). Gli attestati esistenti restano.",
+        "operationId": "deactivateCourse",
         "parameters": [
           {
             "name": "id",
@@ -182,9 +186,10 @@
     "/api/employees": {
       "get": {
         "tags": [
-          "Dipendenti"
+          "Employees"
         ],
         "summary": "Ricerca dipendenti per matricola o nome (max 50 risultati)",
+        "operationId": "searchEmployees",
         "parameters": [
           {
             "name": "query",
@@ -225,9 +230,10 @@
     "/api/employees/{number}/certificates": {
       "get": {
         "tags": [
-          "Dipendenti"
+          "Employees"
         ],
         "summary": "Storico attestati di un dipendente (solo HR/Admin)",
+        "operationId": "getEmployeeHistory",
         "parameters": [
           {
             "name": "number",
@@ -259,9 +265,10 @@
     "/api/departments": {
       "get": {
         "tags": [
-          "Dipendenti"
+          "Employees"
         ],
         "summary": "Reparti con almeno un dipendente attivo",
+        "operationId": "listDepartments",
         "responses": {
           "200": {
             "description": "OK",
@@ -282,9 +289,10 @@
     "/api/expirations": {
       "get": {
         "tags": [
-          "Scadenze"
+          "Reports"
         ],
         "summary": "Attestati scaduti o in scadenza entro N giorni (paginazione lato server)",
+        "operationId": "listExpirations",
         "parameters": [
           {
             "name": "withinDays",
@@ -346,9 +354,10 @@
     "/api/summary/departments": {
       "get": {
         "tags": [
-          "Scadenze"
+          "Reports"
         ],
         "summary": "Riepilogo per reparto: validi, in scadenza, scaduti, mancanti obbligatori",
+        "operationId": "getDepartmentSummary",
         "responses": {
           "200": {
             "description": "OK",
@@ -369,9 +378,10 @@
     "/api/exports/expirations.xml": {
       "get": {
         "tags": [
-          "Import XML"
+          "Imports"
         ],
         "summary": "Export XML (urn:attestia:export:v1) delle scadenze",
+        "operationId": "exportExpirationsXml",
         "parameters": [
           {
             "name": "withinDays",
@@ -404,10 +414,10 @@
     "/api/certificates/{id}": {
       "get": {
         "tags": [
-          "Attestati"
+          "Certificates"
         ],
         "summary": "Dettaglio di un attestato",
-        "operationId": "GetCertificate",
+        "operationId": "getCertificate",
         "parameters": [
           {
             "name": "id",
@@ -437,9 +447,10 @@
       },
       "put": {
         "tags": [
-          "Attestati"
+          "Certificates"
         ],
         "summary": "Corregge data o punteggio (la versione precedente resta nello storico temporale)",
+        "operationId": "updateCertificate",
         "parameters": [
           {
             "name": "id",
@@ -501,9 +512,10 @@
     "/api/certificates": {
       "post": {
         "tags": [
-          "Attestati"
+          "Certificates"
         ],
         "summary": "Registra manualmente un completamento",
+        "operationId": "createCertificate",
         "requestBody": {
           "content": {
             "application/json": {
@@ -551,9 +563,10 @@
     "/api/me": {
       "get": {
         "tags": [
-          "Utente corrente"
+          "Me"
         ],
         "summary": "Identità e ruolo dell'utente autenticato (sessione SSO)",
+        "operationId": "getMe",
         "responses": {
           "200": {
             "description": "OK",
@@ -571,9 +584,10 @@
     "/api/me/certificates": {
       "get": {
         "tags": [
-          "Utente corrente"
+          "Me"
         ],
         "summary": "Storico attestati dell'utente autenticato",
+        "operationId": "getMyCertificates",
         "responses": {
           "200": {
             "description": "OK",
@@ -594,9 +608,10 @@
     "/api/imports/certificates": {
       "post": {
         "tags": [
-          "Import XML"
+          "Imports"
         ],
         "summary": "Importa i completamenti da un XML dell'LMS (dryRun=true: solo anteprima, nulla viene salvato)",
+        "operationId": "importCertificates",
         "parameters": [
           {
             "name": "dryRun",
@@ -652,9 +667,10 @@
     "/api/imports": {
       "get": {
         "tags": [
-          "Import XML"
+          "Imports"
         ],
         "summary": "Storico degli import (ultimi 50)",
+        "operationId": "listImports",
         "responses": {
           "200": {
             "description": "OK",
@@ -676,6 +692,14 @@
   "components": {
     "schemas": {
       "CertificateHistoryEntry": {
+        "required": [
+          "courseCode",
+          "courseTitle",
+          "category",
+          "isMandatory",
+          "status",
+          "isCurrent"
+        ],
         "type": "object",
         "properties": {
           "certificateId": {
@@ -733,6 +757,14 @@
         }
       },
       "CertificateRecord": {
+        "required": [
+          "id",
+          "employeeNumber",
+          "courseCode",
+          "completedOn",
+          "source",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -780,6 +812,14 @@
         ]
       },
       "Course": {
+        "required": [
+          "id",
+          "code",
+          "title",
+          "category",
+          "isMandatory",
+          "isActive"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -845,7 +885,8 @@
         "required": [
           "code",
           "title",
-          "category"
+          "category",
+          "isMandatory"
         ],
         "type": "object",
         "properties": {
@@ -878,6 +919,14 @@
         }
       },
       "DepartmentSummary": {
+        "required": [
+          "department",
+          "employeeCount",
+          "validCount",
+          "expiringSoonCount",
+          "expiredCount",
+          "missingCount"
+        ],
         "type": "object",
         "properties": {
           "department": {
@@ -906,6 +955,16 @@
         }
       },
       "Employee": {
+        "required": [
+          "id",
+          "employeeNumber",
+          "firstName",
+          "lastName",
+          "email",
+          "department",
+          "role",
+          "isActive"
+        ],
         "type": "object",
         "properties": {
           "id": {
@@ -954,6 +1013,19 @@
         }
       },
       "ExpiringCertificate": {
+        "required": [
+          "certificateId",
+          "employeeNumber",
+          "firstName",
+          "lastName",
+          "department",
+          "courseCode",
+          "courseTitle",
+          "completedOn",
+          "expiresOn",
+          "daysToExpiry",
+          "status"
+        ],
         "type": "object",
         "properties": {
           "certificateId": {
@@ -1325,7 +1397,9 @@
       "UpdateCourseRequest": {
         "required": [
           "title",
-          "category"
+          "category",
+          "isMandatory",
+          "isActive"
         ],
         "type": "object",
         "properties": {
@@ -1360,22 +1434,22 @@
   },
   "tags": [
     {
-      "name": "Corsi"
+      "name": "Courses"
     },
     {
-      "name": "Dipendenti"
+      "name": "Employees"
     },
     {
-      "name": "Scadenze"
+      "name": "Reports"
     },
     {
-      "name": "Import XML"
+      "name": "Imports"
     },
     {
-      "name": "Attestati"
+      "name": "Certificates"
     },
     {
-      "name": "Utente corrente"
+      "name": "Me"
     }
   ]
 }

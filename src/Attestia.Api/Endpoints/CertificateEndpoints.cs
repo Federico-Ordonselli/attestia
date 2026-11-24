@@ -13,21 +13,22 @@ internal static class CertificateEndpoints
 
     public static RouteGroupBuilder MapCertificates(this RouteGroupBuilder api)
     {
-        var g = api.MapGroup("/certificates").WithTags("Attestati").RequireAuthorization(Policies.Hr);
+        var g = api.MapGroup("/certificates").WithTags("Certificates").RequireAuthorization(Policies.Hr);
 
         g.MapGet("/{id:int}", async Task<Results<Ok<CertificateRecord>, NotFound>> (int id, ICertificateRepository repo, IBusinessClock clock, CancellationToken ct) =>
                 await repo.GetAsync(id, clock.Today, ct) is { } c ? TypedResults.Ok(c) : TypedResults.NotFound())
-            .WithName("GetCertificate")
+            .WithName("getCertificate")
             .WithSummary("Dettaglio di un attestato");
 
         g.MapPost("/", async (CreateCertificateRequest req, ICertificateRepository repo, IBusinessClock clock, CancellationToken ct) =>
             {
                 EnsureValidCompletionDate(req.CompletedOn, clock.Today);
                 var created = await repo.InsertAsync(new CertificateInput(req.EmployeeNumber, req.CourseCode, req.CompletedOn, req.Score), clock.Today, ct);
-                return TypedResults.CreatedAtRoute(created, "GetCertificate", new { id = created.Id });
+                return TypedResults.CreatedAtRoute(created, "getCertificate", new { id = created.Id });
             })
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .WithName("createCertificate")
             .WithSummary("Registra manualmente un completamento");
 
         g.MapPut("/{id:int}", async Task<Results<Ok<CertificateRecord>, NotFound>> (int id, UpdateCertificateRequest req, ICertificateRepository repo,
@@ -38,6 +39,7 @@ internal static class CertificateEndpoints
             })
             .ProducesProblem(StatusCodes.Status409Conflict)
             .ProducesProblem(StatusCodes.Status422UnprocessableEntity)
+            .WithName("updateCertificate")
             .WithSummary("Corregge data o punteggio (la versione precedente resta nello storico temporale)");
 
         return api;
