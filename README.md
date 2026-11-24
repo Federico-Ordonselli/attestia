@@ -139,7 +139,7 @@ docker run --rm -v "$PWD:/w:ro" -w /w mcr.microsoft.com/dotnet/sdk:10.0 pwsh -No
 | Back-office Angular | Test unitari, lint, build, e2e Playwright con login SAML reale e controlli axe WCAG 2.1 AA su 5 schermate | Deep link sotto IIS con URL Rewrite (CHECKLIST 15) |
 | Portale ASP classic | Controlli statici: UTF-8/CRLF, `Option Explicit`, niente SQL concatenato, parametri e colonne coerenti con le procedure, output codificato, contratto del cookie | **Tutta l'esecuzione**: VBScript, ADO/MSOLEDBSQL, HMAC via COM (autotest col vettore, CHECKLIST 11), cookie alterati o scaduti, JSON (CHECKLIST 9–14) |
 | IIS | `web.config` XML ben formati; `Install-Attestia.ps1` analizzato con il parser PowerShell e PSScriptAnalyzer (in Docker); pacchetto `win-x64` costruito | **Esecuzione dello script**, pool, ACL, rewrite, intestazioni, limiti di upload, file riservati (CHECKLIST 4–6, 17–20) |
-| CI | Workflow GitHub Actions scritti e validati con `actionlint` | Esecuzione su GitHub (il repository non è ancora pubblicato) |
+| CI | GitHub Actions **verde** su GitHub: build e test .NET, Angular, e2e con Keycloak, controlli statici, gitleaks, CodeQL (nessun risultato) | — |
 
 ## Scelte tecniche principali
 
