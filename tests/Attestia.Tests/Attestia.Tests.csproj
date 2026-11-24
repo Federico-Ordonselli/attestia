@@ -3,13 +3,14 @@
     <IsPackable>false</IsPackable>
     <OutputType>Exe</OutputType>
     <!-- I test usano nomi descrittivi con underscore e asserzioni su async void-free code. -->
-    <NoWarn>$(NoWarn);CA1707;CA1515;CA2007;CA1861</NoWarn>
+    <NoWarn>$(NoWarn);CA1707;CA1515;CA2007;CA1861;xUnit1051</NoWarn>
   </PropertyGroup>
   <ItemGroup>
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="Microsoft.Testing.Extensions.CodeCoverage" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Testcontainers.MsSql" />
+    <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
   </ItemGroup>
   <ItemGroup>
     <Using Include="Xunit" />

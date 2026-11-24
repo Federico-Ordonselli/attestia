@@ -5,6 +5,7 @@ using Microsoft.Data.SqlClient;
 
 namespace Attestia.Tests.Database;
 
+
 /// <summary>
 /// Scenario fisso (AsOf = 15/06/2026, soglia 60 giorni) condiviso dai test delle procedure di report.
 /// </summary>

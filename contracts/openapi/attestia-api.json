@@ -1,25 +1,1027 @@
 {
   "openapi": "3.1.1",
   "info": {
-    "title": "Attestia.Api | v1",
-    "version": "1.0.0"
+    "title": "Attestia API",
+    "description": "Registro della formazione obbligatoria con scadenze. Autenticazione: cookie attestia_sso emesso da /sso/acs.",
+    "version": "v1"
   },
   "paths": {
-    "/health": {
+    "/api/courses": {
       "get": {
         "tags": [
-          "Attestia.Api"
+          "Corsi"
+        ],
+        "summary": "Elenco dei corsi",
+        "parameters": [
+          {
+            "name": "includeInactive",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "default": false
+            }
+          }
         ],
         "responses": {
           "200": {
             "description": "OK",
             "content": {
-              "text/plain": {
+              "application/json": {
                 "schema": {
-                  "type": "string"
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Course"
+                  }
                 }
               }
             }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "Corsi"
+        ],
+        "summary": "Crea un corso (solo Admin)",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCourseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/courses/{id}": {
+      "get": {
+        "tags": [
+          "Corsi"
+        ],
+        "summary": "Dettaglio di un corso",
+        "operationId": "GetCourse",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Corsi"
+        ],
+        "summary": "Modifica un corso (solo Admin; il codice non cambia)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCourseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Course"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "Corsi"
+        ],
+        "summary": "Disattiva un corso (solo Admin). Gli attestati esistenti restano.",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "No Content"
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/employees": {
+      "get": {
+        "tags": [
+          "Dipendenti"
+        ],
+        "summary": "Ricerca dipendenti per matricola o nome (max 50 risultati)",
+        "parameters": [
+          {
+            "name": "query",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/Employee"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/employees/{number}/certificates": {
+      "get": {
+        "tags": [
+          "Dipendenti"
+        ],
+        "summary": "Storico attestati di un dipendente (solo HR/Admin)",
+        "parameters": [
+          {
+            "name": "number",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "pattern": "^[A-Z0-9-]{2,20}$",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHistory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    },
+    "/api/departments": {
+      "get": {
+        "tags": [
+          "Dipendenti"
+        ],
+        "summary": "Reparti con almeno un dipendente attivo",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/expirations": {
+      "get": {
+        "tags": [
+          "Scadenze"
+        ],
+        "summary": "Attestati scaduti o in scadenza entro N giorni (paginazione lato server)",
+        "parameters": [
+          {
+            "name": "withinDays",
+            "in": "query",
+            "schema": {
+              "maximum": 3650,
+              "minimum": 0,
+              "type": "integer",
+              "format": "int32",
+              "default": 60
+            }
+          },
+          {
+            "name": "department",
+            "in": "query",
+            "schema": {
+              "maxLength": 100,
+              "minLength": 0,
+              "type": "string"
+            }
+          },
+          {
+            "name": "page",
+            "in": "query",
+            "schema": {
+              "maximum": 100000,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "maximum": 200,
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32",
+              "default": 20
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PagedResultOfExpiringCertificate"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/summary/departments": {
+      "get": {
+        "tags": [
+          "Scadenze"
+        ],
+        "summary": "Riepilogo per reparto: validi, in scadenza, scaduti, mancanti obbligatori",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/DepartmentSummary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/certificates/{id}": {
+      "get": {
+        "tags": [
+          "Attestati"
+        ],
+        "summary": "Dettaglio di un attestato",
+        "operationId": "GetCertificate",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "Attestati"
+        ],
+        "summary": "Corregge data o punteggio (la versione precedente resta nello storico temporale)",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateCertificateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateRecord"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/certificates": {
+      "post": {
+        "tags": [
+          "Attestati"
+        ],
+        "summary": "Registra manualmente un completamento",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateCertificateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Created",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CertificateRecord"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "Conflict",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Unprocessable Entity",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me": {
+      "get": {
+        "tags": [
+          "Utente corrente"
+        ],
+        "summary": "Identità e ruolo dell'utente autenticato (sessione SSO)",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/me/certificates": {
+      "get": {
+        "tags": [
+          "Utente corrente"
+        ],
+        "summary": "Storico attestati dell'utente autenticato",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmployeeHistory"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Not Found"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CertificateHistoryEntry": {
+        "type": "object",
+        "properties": {
+          "certificateId": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "courseCode": {
+            "type": "string"
+          },
+          "courseTitle": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "isMandatory": {
+            "type": "boolean"
+          },
+          "completedOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "score": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "source": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "$ref": "#/components/schemas/CertificateStatus"
+          },
+          "isCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CertificateRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "courseCode": {
+            "type": "string"
+          },
+          "completedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiresOn": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date"
+          },
+          "score": {
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          },
+          "source": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CertificateStatus"
+          }
+        }
+      },
+      "CertificateStatus": {
+        "enum": [
+          "Valid",
+          "ExpiringSoon",
+          "Expired",
+          "Missing"
+        ]
+      },
+      "Course": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "code": {
+            "type": "string"
+          },
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "validityMonths": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isMandatory": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CreateCertificateRequest": {
+        "required": [
+          "employeeNumber",
+          "courseCode",
+          "completedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeNumber": {
+            "pattern": "^[A-Z0-9-]{2,20}$",
+            "type": "string"
+          },
+          "courseCode": {
+            "pattern": "^[A-Z0-9-]{2,20}$",
+            "type": "string"
+          },
+          "completedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "score": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "CreateCourseRequest": {
+        "required": [
+          "code",
+          "title",
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "code": {
+            "pattern": "^[A-Z0-9-]{2,20}$",
+            "type": "string"
+          },
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          },
+          "category": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          },
+          "validityMonths": {
+            "maximum": 240,
+            "minimum": 1,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isMandatory": {
+            "type": "boolean"
+          }
+        }
+      },
+      "DepartmentSummary": {
+        "type": "object",
+        "properties": {
+          "department": {
+            "type": "string"
+          },
+          "employeeCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "validCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiringSoonCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "expiredCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "missingCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "Employee": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "isActive": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EmployeeHistory": {
+        "required": [
+          "employee",
+          "certificates"
+        ],
+        "type": "object",
+        "properties": {
+          "employee": {
+            "$ref": "#/components/schemas/Employee"
+          },
+          "certificates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CertificateHistoryEntry"
+            }
+          }
+        }
+      },
+      "ExpiringCertificate": {
+        "type": "object",
+        "properties": {
+          "certificateId": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "employeeNumber": {
+            "type": "string"
+          },
+          "firstName": {
+            "type": "string"
+          },
+          "lastName": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "courseCode": {
+            "type": "string"
+          },
+          "courseTitle": {
+            "type": "string"
+          },
+          "completedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "expiresOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "daysToExpiry": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CertificateStatus"
+          }
+        }
+      },
+      "MeResponse": {
+        "required": [
+          "employeeNumber",
+          "role",
+          "displayName",
+          "department"
+        ],
+        "type": "object",
+        "properties": {
+          "employeeNumber": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "department": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "PagedResultOfExpiringCertificate": {
+        "required": [
+          "items",
+          "page",
+          "pageSize",
+          "totalCount"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExpiringCertificate"
+            }
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "totalCount": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ProblemDetails": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "title": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "status": {
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "instance": {
+            "type": [
+              "null",
+              "string"
+            ]
+          }
+        }
+      },
+      "UpdateCertificateRequest": {
+        "required": [
+          "completedOn"
+        ],
+        "type": "object",
+        "properties": {
+          "completedOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "score": {
+            "maximum": 100,
+            "minimum": 0,
+            "type": [
+              "null",
+              "number"
+            ],
+            "format": "double"
+          }
+        }
+      },
+      "UpdateCourseRequest": {
+        "required": [
+          "title",
+          "category"
+        ],
+        "type": "object",
+        "properties": {
+          "title": {
+            "maxLength": 200,
+            "minLength": 3,
+            "type": "string"
+          },
+          "category": {
+            "maxLength": 100,
+            "minLength": 2,
+            "type": "string"
+          },
+          "validityMonths": {
+            "maximum": 240,
+            "minimum": 1,
+            "type": [
+              "null",
+              "integer"
+            ],
+            "format": "int32"
+          },
+          "isMandatory": {
+            "type": "boolean"
+          },
+          "isActive": {
+            "type": "boolean"
           }
         }
       }
@@ -27,7 +1029,19 @@
   },
   "tags": [
     {
-      "name": "Attestia.Api"
+      "name": "Corsi"
+    },
+    {
+      "name": "Dipendenti"
+    },
+    {
+      "name": "Scadenze"
+    },
+    {
+      "name": "Attestati"
+    },
+    {
+      "name": "Utente corrente"
     }
   ]
 }

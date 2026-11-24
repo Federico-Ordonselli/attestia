@@ -56,3 +56,20 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 - **Cosa**: xUnit v3 su Microsoft.Testing.Platform (`global.json`), Testcontainers con **un solo** SQL Server 2022 per l'assembly (`AssemblyFixture`) e **un database nuovo per classe di test** (`ClassDatabase`), migrato con lo stesso runner usato in produzione.
 - **Perché**: test realistici (T-SQL, vincoli, tabella temporale, permessi) senza pagare l'avvio di un container per classe, e senza interferenze fra classi. I test di integrazione sono marcati `Category=Integration` per poterli escludere senza Docker.
 - **Scartate**: docker-compose condiviso con lo sviluppo (stato sporco, porte fisse); SQLite/LocalDB (non è SQL Server su Linux).
+
+## D14 — Minimal API (non controller)
+- **Cosa**: endpoint organizzati per area con `MapGroup` (`Endpoints/*.cs`), `TypedResults`, validazione integrata di .NET 10 (`AddValidation()` + DataAnnotations, anche sui parametri di query).
+- **Perché**: meno cerimonia, tipi di risposta espliciti (`Results<Ok<T>, NotFound>`) che arricchiscono l'OpenAPI generato, policy di autorizzazione dichiarate accanto alla rotta. La validazione nativa produce `HttpValidationProblemDetails` senza filtri custom.
+- **Scartate**: controller MVC (più adatti a grandi superfici con filtri condivisi; qui non servono); FluentValidation (dipendenza in più per regole semplici).
+
+## D15 — Autorizzazione: policy per ruolo + fallback obbligatorio
+- **Cosa**: policy `AnyUser` / `Hr` (HR, Admin) / `Admin`; `FallbackPolicy = AnyUser`, quindi ogni endpoint nuovo è protetto per default (anonimi solo `/health`, `/openapi`, `/sso/*`).
+- Un Employee legge solo `/api/me/certificates`: la matricola è letta dal claim. `/api/employees/{number}/certificates` è solo HR, anche per la propria matricola: un endpoint con la matricola in URL non deve mai dipendere da un controllo "è la mia?".
+- **Aggiunta rispetto alla specifica**: `GET /api/me/certificates` e `GET /api/departments` (filtri delle schermate), `GET /api/certificates/{id}` (destinazione di `Location` dopo il POST).
+
+## D16 — Soglia "in scadenza" e data di riferimento
+- La soglia (60 giorni) vive solo in `dbo.AppSettings`; l'API non la duplica in configurazione. L'API passa sempre `@AsOf` calcolato da `IBusinessClock` (fuso Europe/Rome), così i test usano un `FakeTimeProvider`.
+
+## D17 — Errori
+- `IExceptionHandler` unico: `ConflictException` → 409, `UnprocessableException` → 422, tutto il resto → 500 generico con `traceId` (il dettaglio va solo nei log). Gli errori SQL attesi (THROW 51xxx, violazioni unique 2627/2601) sono tradotti nel livello dati, non nell'API.
+- Data di completamento futura → 422: è una regola di dominio (D08), non un errore di formato.
