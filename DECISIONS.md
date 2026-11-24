@@ -48,3 +48,11 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 
 ## D11 — Porte di sviluppo
 - API `https://localhost:7180`, Keycloak `http://localhost:8081` (la 8080 è occupata sulla macchina di sviluppo), SQL Server `127.0.0.1:1433`. Tutte legate a 127.0.0.1.
+
+## D12 — Periodo della tabella temporale in `DATETIME2(7)`
+- **Perché**: con `DATETIME2(2)` un inserimento e una correzione nello stesso centesimo di secondo generano una versione a durata zero, che SQL Server esclude dalle query `FOR SYSTEM_TIME`. Scoperto da un test di integrazione.
+
+## D13 — Strategia di test .NET
+- **Cosa**: xUnit v3 su Microsoft.Testing.Platform (`global.json`), Testcontainers con **un solo** SQL Server 2022 per l'assembly (`AssemblyFixture`) e **un database nuovo per classe di test** (`ClassDatabase`), migrato con lo stesso runner usato in produzione.
+- **Perché**: test realistici (T-SQL, vincoli, tabella temporale, permessi) senza pagare l'avvio di un container per classe, e senza interferenze fra classi. I test di integrazione sono marcati `Category=Integration` per poterli escludere senza Docker.
+- **Scartate**: docker-compose condiviso con lo sviluppo (stato sporco, porte fisse); SQLite/LocalDB (non è SQL Server su Linux).

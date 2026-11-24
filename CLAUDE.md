@@ -12,7 +12,7 @@ cp .env.example .env          # solo la prima volta (valori di sviluppo finti)
 ./dev.sh admin                # build Angular in watch -> web/admin/dist
 dotnet build                  # warning = errori (TreatWarningsAsErrors + analyzers latest-recommended)
 dotnet test                   # unit + integrazione (Testcontainers avvia un SQL Server usa-e-getta: serve Docker)
-dotnet test --filter "Category!=Integration"   # solo unit test, senza Docker
+dotnet test -- --filter-not-trait "Category=Integration"   # solo unit test, senza Docker
 cd web/admin && npm test      # test Angular (Vitest)
 cd web/admin && npm run e2e   # Playwright + axe (richiede up, db, api)
 ./dev.sh openapi              # rigenera contracts/openapi/attestia-api.json e il client Angular

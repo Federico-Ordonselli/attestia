@@ -5,7 +5,7 @@ Stato: ✅ completata · 🔄 in corso · ⏳ da fare
 | # | Fase | Stato | Note |
 |---|------|-------|------|
 | 1 | Fondamenta: struttura repo, CLAUDE/DECISIONS/PLAN, docker-compose (MSSQL + Keycloak), runner migrazioni | ✅ | runner DbUp idempotente verificato su MSSQL 2022 in Docker |
-| 2 | Database: schema, tabella temporale, stored procedure, seed, test di integrazione | ⏳ | |
+| 2 | Database: schema, tabella temporale, stored procedure, seed, test di integrazione | ✅ | 31 test di integrazione su MSSQL 2022 (Testcontainers) |
 | 3 | Dominio e API: stato/scadenza, CRUD, scadenze, riepilogo, autorizzazione, OpenAPI | ⏳ | |
 | 4 | Import/export XML: XSD, parser sicuro, import idempotente, export | ⏳ | |
 | 5 | SAML + SSO: Service Provider, Keycloak, cookie firmato, `/api/me` | ⏳ | |
