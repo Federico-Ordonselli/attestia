@@ -1,0 +1,187 @@
+{
+  "realm": "attestia",
+  "displayName": "Attestia (sviluppo)",
+  "enabled": true,
+  "sslRequired": "external",
+  "registrationAllowed": false,
+  "loginWithEmailAllowed": false,
+  "resetPasswordAllowed": false,
+  "bruteForceProtected": true,
+  "internationalizationEnabled": true,
+  "supportedLocales": [
+    "it",
+    "en"
+  ],
+  "defaultLocale": "it",
+  "accessCodeLifespanLogin": 1800,
+  "ssoSessionIdleTimeout": 3600,
+  "components": {
+    "org.keycloak.userprofile.UserProfileProvider": [
+      {
+        "providerId": "declarative-user-profile",
+        "subComponents": {},
+        "config": {
+          "kc.user.profile.config": [
+            "{\"attributes\": [{\"name\": \"username\", \"displayName\": \"${username}\", \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\"]}, \"validations\": {\"length\": {\"min\": 3, \"max\": 255}, \"username-prohibited-characters\": {}, \"up-username-not-idn-homograph\": {}}}, {\"name\": \"email\", \"displayName\": \"${email}\", \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\"]}, \"validations\": {\"email\": {}, \"length\": {\"max\": 255}}}, {\"name\": \"firstName\", \"displayName\": \"${firstName}\", \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\"]}, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"lastName\", \"displayName\": \"${lastName}\", \"permissions\": {\"view\": [\"admin\", \"user\"], \"edit\": [\"admin\"]}, \"validations\": {\"length\": {\"max\": 255}}}, {\"name\": \"employeeNumber\", \"displayName\": \"Matricola\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"validations\": {\"pattern\": {\"pattern\": \"^E[0-9]{4}$\", \"error-message\": \"Formato matricola: E0000\"}}}, {\"name\": \"role\", \"displayName\": \"Ruolo Attestia\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"validations\": {\"options\": {\"options\": [\"Employee\", \"HR\", \"Admin\"]}}}, {\"name\": \"displayName\", \"displayName\": \"Nome visualizzato\", \"permissions\": {\"view\": [\"admin\"], \"edit\": [\"admin\"]}, \"validations\": {\"length\": {\"max\": 200}}}], \"groups\": []}"
+          ]
+        }
+      }
+    ]
+  },
+  "clients": [
+    {
+      "clientId": "urn:attestia:sp",
+      "name": "Attestia Service Provider",
+      "protocol": "saml",
+      "enabled": true,
+      "publicClient": false,
+      "frontchannelLogout": true,
+      "fullScopeAllowed": false,
+      "baseUrl": "https://localhost:7180/admin/",
+      "redirectUris": [
+        "https://localhost:7180/sso/*"
+      ],
+      "attributes": {
+        "saml.assertion.signature": "true",
+        "saml.server.signature": "true",
+        "saml.server.signature.keyinfo.ext": "false",
+        "saml.signature.algorithm": "RSA_SHA256",
+        "saml_signature_canonicalization_method": "http://www.w3.org/2001/10/xml-exc-c14n#",
+        "saml.client.signature": "false",
+        "saml.encrypt": "false",
+        "saml.authnstatement": "true",
+        "saml.force.post.binding": "true",
+        "saml_force_name_id_format": "true",
+        "saml_name_id_format": "username",
+        "saml_assertion_consumer_url_post": "https://localhost:7180/sso/acs",
+        "saml_single_logout_service_url_redirect": "https://localhost:7180/sso/logout",
+        "saml_single_logout_service_url_post": "https://localhost:7180/sso/logout",
+        "saml.assertion.lifespan": "300"
+      },
+      "protocolMappers": [
+        {
+          "name": "employeeNumber",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "employeeNumber",
+            "attribute.name": "employeeNumber",
+            "friendly.name": "employeeNumber",
+            "attribute.nameformat": "Basic",
+            "aggregate.attrs": "false"
+          }
+        },
+        {
+          "name": "role",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "role",
+            "attribute.name": "role",
+            "friendly.name": "role",
+            "attribute.nameformat": "Basic",
+            "aggregate.attrs": "false"
+          }
+        },
+        {
+          "name": "displayName",
+          "protocol": "saml",
+          "protocolMapper": "saml-user-attribute-mapper",
+          "consentRequired": false,
+          "config": {
+            "user.attribute": "displayName",
+            "attribute.name": "displayName",
+            "friendly.name": "displayName",
+            "attribute.nameformat": "Basic",
+            "aggregate.attrs": "false"
+          }
+        }
+      ]
+    }
+  ],
+  "users": [
+    {
+      "username": "dipendente",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "dipendente@example.test",
+      "firstName": "Nadia",
+      "lastName": "Verdolino",
+      "attributes": {
+        "employeeNumber": [
+          "E0001"
+        ],
+        "role": [
+          "Employee"
+        ],
+        "displayName": [
+          "Nadia Verdolino"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev-Only-Password-1",
+          "temporary": false
+        }
+      ],
+      "requiredActions": []
+    },
+    {
+      "username": "hr",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "hr@example.test",
+      "firstName": "Ettore",
+      "lastName": "Calcagnetti",
+      "attributes": {
+        "employeeNumber": [
+          "E0002"
+        ],
+        "role": [
+          "HR"
+        ],
+        "displayName": [
+          "Ettore Calcagnetti"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev-Only-Password-1",
+          "temporary": false
+        }
+      ],
+      "requiredActions": []
+    },
+    {
+      "username": "admin",
+      "enabled": true,
+      "emailVerified": true,
+      "email": "admin@example.test",
+      "firstName": "Livia",
+      "lastName": "Sbaraglini",
+      "attributes": {
+        "employeeNumber": [
+          "E0003"
+        ],
+        "role": [
+          "Admin"
+        ],
+        "displayName": [
+          "Livia Sbaraglini"
+        ]
+      },
+      "credentials": [
+        {
+          "type": "password",
+          "value": "Dev-Only-Password-1",
+          "temporary": false
+        }
+      ],
+      "requiredActions": []
+    }
+  ]
+}

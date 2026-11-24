@@ -1,0 +1,5 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <EmbeddedResource Include="..\..\contracts\*.xsd" LinkBase="Schemas" />
+  </ItemGroup>
+</Project>

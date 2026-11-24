@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup>
+    <UserSecretsId>attestia-api-dev</UserSecretsId>
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/../../contracts/openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocumentsOptions>--file-name attestia-api</OpenApiGenerateDocumentsOptions>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Attestia.Core\Attestia.Core.csproj" />
+    <ProjectReference Include="..\Attestia.Data\Attestia.Data.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+    <PackageReference Include="ITfoxtec.Identity.Saml2.MvcCore" />
+  </ItemGroup>
+  <ItemGroup>
+    <InternalsVisibleTo Include="Attestia.Tests" />
+  </ItemGroup>
+</Project>

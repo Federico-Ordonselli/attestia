@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Attestia.Api/Attestia.Api.csproj" />
+    <Project Path="src/Attestia.Core/Attestia.Core.csproj" />
+    <Project Path="src/Attestia.Data/Attestia.Data.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Attestia.Tests/Attestia.Tests.csproj" />
+  </Folder>
+</Solution>

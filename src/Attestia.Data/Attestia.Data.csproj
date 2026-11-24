@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <ItemGroup>
+    <ProjectReference Include="..\Attestia.Core\Attestia.Core.csproj" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Dapper" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.Data.SqlClient" />
+    <PackageReference Include="dbup-sqlserver" />
+  </ItemGroup>
+  <ItemGroup>
+    <!-- Gli script T-SQL vivono in /db e vengono incorporati: il runner non dipende dal percorso di avvio. -->
+    <EmbeddedResource Include="..\..\db\migrations\*.sql" LinkBase="Scripts\Migrations" />
+    <EmbeddedResource Include="..\..\db\seed\*.sql" LinkBase="Scripts\Seed" />
+  </ItemGroup>
+</Project>

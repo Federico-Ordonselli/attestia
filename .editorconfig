@@ -1,0 +1,36 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.{cs,csx}]
+indent_size = 4
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_sort_system_directives_first = true
+# Le API sono interne al prodotto: niente localizzazione delle stringhe tecniche.
+dotnet_diagnostic.CA1303.severity = none
+# ConfigureAwait non serve in ASP.NET Core (nessun SynchronizationContext).
+dotnet_diagnostic.CA2007.severity = none
+
+[*.{sql}]
+indent_size = 4
+
+[*.{asp,asa,inc}]
+indent_size = 4
+end_of_line = crlf
+
+[*.{ps1,psm1}]
+indent_size = 4
+end_of_line = crlf
+
+[*.md]
+trim_trailing_whitespace = false
+
+[*.cs]
+# CA1873 segnala anche chiamate gia' protette da ILogger.IsEnabled verso metodi [LoggerMessage]: falso positivo.
+dotnet_diagnostic.CA1873.severity = suggestion
