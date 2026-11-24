@@ -80,6 +80,8 @@ jobs:
       - name: PowerShell (parser + PSScriptAnalyzer)
         shell: pwsh
         run: ./scripts/check_powershell.ps1
+      - name: Installa xmllint (non preinstallato sul runner)
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq libxml2-utils
       - name: web.config ben formati
         run: for f in deploy/iis/web.config.*; do xmllint --noout "$f"; done
       - name: Esempi XML contro gli XSD (validatore indipendente)

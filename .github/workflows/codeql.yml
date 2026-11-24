@@ -18,6 +18,7 @@ jobs:
     permissions:
       security-events: write
       contents: read
+      actions: read # richiesto dall'azione CodeQL per leggere lo stato del run (repo privati)
     strategy:
       fail-fast: false
       matrix:
@@ -40,6 +41,23 @@ jobs:
       - name: Build
         if: matrix.build-mode == 'manual'
         run: dotnet build -c Release
+      # Repo pubblico: risultati caricati in Code Scanning. Repo privato senza GitHub Advanced Security:
+      # il caricamento non e' disponibile, quindi il SARIF diventa un artifact e il job fallisce sugli errori.
       - uses: github/codeql-action/analyze@v4
         with:
           category: "/language:${{ matrix.language }}"
+          upload: ${{ github.event.repository.private && 'never' || 'always' }}
+          output: sarif-results
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: codeql-${{ matrix.language }}
+          path: sarif-results
+          if-no-files-found: ignore
+      - name: Nessun risultato di livello "error"
+        if: github.event.repository.private
+        run: |
+          count=$(jq '[.runs[].results[] | select(.level == "error")] | length' sarif-results/*.sarif | paste -sd+ | bc)
+          jq -r '.runs[].results[] | "\(.level)\t\(.ruleId)\t\(.locations[0].physicalLocation.artifactLocation.uri):\(.locations[0].physicalLocation.region.startLine)"' sarif-results/*.sarif
+          echo "Risultati di livello error: $count"
+          test "$count" -eq 0
