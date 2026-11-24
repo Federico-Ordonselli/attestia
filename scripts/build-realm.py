@@ -90,7 +90,8 @@ realm = {
             "frontchannelLogout": True,
             "fullScopeAllowed": False,
             "baseUrl": f"{SP_BASE}/admin/",
-            "redirectUris": [f"{SP_BASE}/sso/*"],
+            # Origine di sviluppo su Linux e origine IIS della checklist Windows.
+            "redirectUris": [f"{SP_BASE}/sso/*", "https://attestia.local/sso/*"],
             "attributes": {
                 "saml.assertion.signature": "true",
                 "saml.server.signature": "true",

@@ -18,6 +18,8 @@ cd web/admin && npm run e2e   # Playwright + axe (richiede up, db, api)
 ./dev.sh openapi              # rigenera contracts/openapi/attestia-api.json e il client Angular
 dotnet run --project src/Attestia.Api -- sso-cookie E0001 Employee --expires-in -60   # cookie di prova (scaduto)
 python3 scripts/check_portal.py   # controlli statici del portale ASP classic
+deploy/iis/build-package.sh       # pacchetto IIS in deploy/iis/out (publish win-x64 + build Angular + portale)
+docker run --rm -v "$PWD:/w:ro" -w /w mcr.microsoft.com/dotnet/sdk:10.0 pwsh -NoProfile -File scripts/check_powershell.ps1
 ```
 
 Utenti Keycloak di sviluppo: `dipendente` (E0001, Employee), `hr` (E0002, HR), `admin` (E0003, Admin), password `Dev-Only-Password-1`.
@@ -29,11 +31,12 @@ Utenti Keycloak di sviluppo: `dipendente` (E0001, Employee), `hr` (E0002, HR), `
 - `src/Attestia.Api` — minimal API (`/api/*`), Service Provider SAML (`/sso/*`), autenticazione tramite cookie `attestia_sso`.
 - `tests/Attestia.Tests` — xUnit v3. `Category=Integration` usa Testcontainers (MSSQL reale).
 - `web/admin` — Angular (standalone, signals, strict), Bootstrap 5, servito sotto `/admin`.
-- `legacy/portale` — ASP classic (VBScript), jQuery + Bootstrap 3 locali. Non eseguibile su Linux.
+- `legacy/portale` — ASP classic (VBScript), jQuery + Bootstrap 3 locali. Non eseguibile su Linux. Le pagine hanno direttiva `@` e `Option Explicit`; gli `include/` NO (vengono copiati nella pagina).
+- `legacy/portale-tests` — autotest HMAC per il collaudo su Windows (mai nel pacchetto).
 - `db/migrations` (`V###__*.sql`, journal `SchemaVersions`), `db/seed` (`S###__*.sql`, journal `SeedVersions`).
 - `contracts` — XSD import/export, esempi XML, OpenAPI generato.
 - `deploy/docker` — compose + realm Keycloak (generato da `scripts/build-realm.py`).
-- `deploy/iis` — script PowerShell, web.config, checklist Windows.
+- `deploy/iis` — script PowerShell (CRLF + BOM, richiesti da PowerShell 5.1), web.config, checklist Windows.
 
 ## Convenzioni
 

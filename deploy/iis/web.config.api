@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<configuration>
+  <location path="." inheritInChildApplications="false">
+    <system.webServer>
+      <handlers>
+        <add name="aspNetCore" path="*" verb="*" modules="AspNetCoreModuleV2" resourceType="Unspecified" />
+      </handlers>
+      <aspNetCore hostingModel="inprocess" processPath="dotnet" arguments=".\Attestia.Api.dll" stdoutLogEnabled="false" />
+      <security><requestFiltering removeServerHeader="true">
+        <requestLimits maxAllowedContentLength="2097152" />
+        <hiddenSegments>
+          <add segment=".git" /><add segment=".env" /><add segment="appsettings.json" />
+          <add segment="appsettings.Production.json" /><add segment="appsettings.Development.json" />
+        </hiddenSegments>
+      </requestFiltering></security>
+      <!-- Le intestazioni di sicurezza (HSTS, nosniff, X-Frame-Options, Referrer-Policy, CSP) le imposta l'API:
+           ripeterle qui le duplicherebbe ("DENY, DENY" e' un valore non valido per alcuni browser). -->
+      <httpProtocol><customHeaders>
+        <remove name="X-Powered-By" />
+      </customHeaders></httpProtocol>
+      <httpErrors existingResponse="PassThrough" />
+      <rewrite>
+        <rules>
+          <rule name="RequireHttps" stopProcessing="true">
+          <match url=".*" />
+          <conditions>
+            <add input="{HTTPS}" pattern="^OFF$" />
+            <add input="{HTTP_HOST}" pattern="^([a-z0-9.-]+)(?::[0-9]+)?$" />
+          </conditions>
+          <action type="Redirect" url="https://{C:1}{UNENCODED_URL}" appendQueryString="false" redirectType="Permanent" />
+        </rule>
+          <rule name="PortalHome" stopProcessing="true">
+            <match url="^$" /><action type="Redirect" url="/portale/" redirectType="Found" />
+          </rule>
+        </rules>
+      </rewrite>
+    </system.webServer>
+  </location>
+</configuration>

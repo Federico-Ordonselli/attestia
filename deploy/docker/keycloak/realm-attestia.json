@@ -39,7 +39,8 @@
       "fullScopeAllowed": false,
       "baseUrl": "https://localhost:7180/admin/",
       "redirectUris": [
-        "https://localhost:7180/sso/*"
+        "https://localhost:7180/sso/*",
+        "https://attestia.local/sso/*"
       ],
       "attributes": {
         "saml.assertion.signature": "true",
