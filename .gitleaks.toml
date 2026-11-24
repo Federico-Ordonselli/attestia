@@ -1,0 +1,11 @@
+# Configurazione gitleaks: regole predefinite + eccezioni motivate, limitate a file specifici.
+[extend]
+useDefault = true
+
+[allowlist]
+description = "Valori pubblici per costruzione: vettore di test HMAC (calcolato con Python, usato da test .NET e autotest VBScript) e valori di solo sviluppo palesemente finti."
+paths = [
+  '''^\.env\.example$''',
+  '''^tests/Attestia\.Tests/Sso/SsoCookieTests\.cs$''',
+  '''^legacy/portale-tests/hmac-selftest\.asp$''',
+]

@@ -12,7 +12,7 @@ Stato: ✅ completata · 🔄 in corso · ⏳ da fare
 | 6 | Angular back-office: schermate, client generato, test, e2e | ✅ | 25 test Vitest, 4 e2e Playwright (SAML reale + axe), lint pulito |
 | 7 | Portale ASP classic: pagine, include, JSON, assets; controlli statici | ✅ | controlli statici superati (anche con test di mutazione); esecuzione **da verificare su Windows** |
 | 8 | IIS e documentazione: PowerShell, web.config, checklist, README | ✅ | script analizzato (parser + PSScriptAnalyzer in Docker), pacchetto win-x64 costruito; esecuzione **da verificare su Windows** |
-| 9 | CI e rifinitura: GitHub Actions, audit, pulizia | ⏳ | |
+| 9 | CI e rifinitura: GitHub Actions, audit, pulizia | ✅ | workflow validati con actionlint, comandi eseguiti in locale; esecuzione su GitHub in attesa di pubblicazione |
 
 ## Verificato in automatico (Linux) / Da verificare su Windows
 

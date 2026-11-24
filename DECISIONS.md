@@ -146,3 +146,15 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 - **"Oggi" in UTC**: VBScript non ha un orologio UTC; `UnixNow()` è una funzione JScript nello stesso include (`<script language="JScript" runat="server">`).
 - **Bootstrap 3 voluto**: rappresenta un portale preesistente, è fuori supporto (EOL 2019) e in produzione andrebbe migrato. I colori dei `label` sono ridefiniti per il contrasto AA.
 - **Controlli statici su Linux** (`scripts/check_portal.py`): UTF-8 senza BOM, CRLF, direttive e `Option Explicit`, niente SQL nelle stringhe VBScript, nomi di procedure, parametri e colonne confrontati con le migrazioni, ogni output protetto da `H()`/`JsonString()`, costanti del cookie confrontate con `SsoCookie.cs`, nessuna risorsa esterna. Verificati con test di mutazione (un errore introdotto apposta viene segnalato).
+
+## D30 — Layout IIS: API come applicazione radice
+- **Cosa**: un sito, tre applicazioni con tre pool: `/` → ASP.NET Core (serve `/api/*`, `/sso/*`, `/health`), `/portale` → ASP classic, `/admin` → Angular statico. Il `web.config` della radice usa `<location path="." inheritInChildApplications="false">`, così il gestore `aspNetCore` non viene ereditato dalle applicazioni figlie.
+- **Perché**: la specifica vuole sia `/api` sia `/sso` sull'app ASP.NET Core. Con un'applicazione IIS montata su `/api`, `/sso` non ci arriverebbe; la riscrittura verso un'altra applicazione richiederebbe ARR o lo stesso application pool. Una sola origine semplifica cookie (`Path=/`), CSRF e CORS (non serve).
+- **Scartate**: app `/api` con endpoint SSO sotto `/api/sso` (cambia i percorsi richiesti); ARR come reverse proxy (componente in più da installare).
+- ⚠️ **Da confermare**: è una deviazione dalla lettera della specifica ("applicazione /api"), non dalla sostanza (tre applicazioni, tre pool).
+
+## D31 — CI (GitHub Actions)
+- Job separati: .NET (restore con NuGetAudit bloccante, build Release con warning come errori, OpenAPI allineato, `dotnet list package --vulnerable`, test con Testcontainers + TRX + copertura), Angular (client allineato al contratto, lint, Vitest, build, `npm audit`), controlli statici di portale/IIS/XSD, E2E con Docker Compose (SQL Server + Keycloak) e Playwright, gitleaks sull'intera cronologia. CodeQL (`security-extended`) per C# e TypeScript in un workflow dedicato, Dependabot per NuGet, npm e Actions.
+- **SQL Server in CI**: tramite Testcontainers invece di un `services:` di GitHub Actions: gli stessi test girano identici in locale e in CI, ognuno con il proprio database.
+- I workflow sono validati con `actionlint` (che include shellcheck) e ogni comando è stato eseguito in locale. Il controllo ha già evitato due fallimenti al primo giro: un'opzione di test che richiedeva un pacchetto mancante e una vulnerabilità moderata in una dipendenza di sviluppo (`typescript-eslint` → `minimatch`), aggiornata.
+- **Non ancora eseguiti su GitHub**: il repository non è pubblicato.

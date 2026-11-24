@@ -1,0 +1,15 @@
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      dotnet: { patterns: ["*"] }
+  - package-ecosystem: npm
+    directory: /web/admin
+    schedule: { interval: weekly }
+    groups:
+      angular: { patterns: ["@angular/*", "@angular-devkit/*", "angular-eslint"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

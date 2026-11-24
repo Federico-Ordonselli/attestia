@@ -46,7 +46,7 @@ flowchart LR
     API -. "cookie attestia_sso (HMAC)" .-> P
 ```
 
-L'API è l'applicazione **radice** del sito: `/api` e `/sso` devono arrivare entrambi ad ASP.NET Core. `/portale` e `/admin` sono applicazioni figlie con il proprio application pool (vedi [DECISIONS.md](DECISIONS.md) D23, D29).
+L'API è l'applicazione **radice** del sito: `/api` e `/sso` devono arrivare entrambi ad ASP.NET Core. `/portale` e `/admin` sono applicazioni figlie con il proprio application pool (vedi [DECISIONS.md](DECISIONS.md) D30).
 
 ### Una sola sessione per tre runtime
 

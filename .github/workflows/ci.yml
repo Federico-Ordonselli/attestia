@@ -1,0 +1,146 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  DOTNET_NOLOGO: "true"
+  DOTNET_CLI_TELEMETRY_OPTOUT: "true"
+
+jobs:
+  dotnet:
+    name: .NET – build, test (SQL Server reale), audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - name: "Restore (NuGetAudit: vulnerabilità = errore di build)"
+        run: dotnet restore
+      - name: Build (warning = errori)
+        run: dotnet build --no-restore -c Release
+      - name: OpenAPI generato allineato al codice
+        run: git diff --exit-code -- contracts/openapi
+      - name: Audit delle dipendenze NuGet (anche transitive)
+        run: |
+          dotnet list package --vulnerable --include-transitive 2>&1 | tee audit.txt
+          if grep -q "has the following vulnerable packages" audit.txt; then exit 1; fi
+      - name: Test (unit + integrazione; Testcontainers avvia SQL Server 2022)
+        run: dotnet test --no-build -c Release -- --report-trx --coverage --coverage-output-format cobertura
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: dotnet-test-results
+          path: tests/**/TestResults/**
+          if-no-files-found: ignore
+
+  admin:
+    name: Angular – lint, test, build, audit
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: web/admin
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/admin/package-lock.json
+      - run: npm ci
+      - name: Client API allineato al contratto OpenAPI
+        run: npm run check:api
+      - run: npm run lint
+      - run: npm test
+      - run: npm run build
+      - name: Audit delle dipendenze npm
+        run: npm audit --audit-level=moderate
+
+  legacy-and-iis:
+    name: Portale ASP classic e IIS – controlli statici
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - name: Portale ASP classic (encoding, Option Explicit, SQL, output, contratto cookie)
+        run: python3 scripts/check_portal.py
+      - name: PowerShell (parser + PSScriptAnalyzer)
+        shell: pwsh
+        run: ./scripts/check_powershell.ps1
+      - name: web.config ben formati
+        run: for f in deploy/iis/web.config.*; do xmllint --noout "$f"; done
+      - name: Esempi XML contro gli XSD (validatore indipendente)
+        run: |
+          xmllint --noout --schema contracts/attestia-import-v1.xsd contracts/samples/import-valid.xml contracts/samples/import-semantic-errors.xml
+          ! xmllint --noout --schema contracts/attestia-import-v1.xsd contracts/samples/import-schema-errors.xml
+
+  e2e:
+    name: E2E – login SAML reale (Keycloak), import, accessibilità
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    needs: [dotnet, admin]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: web/admin/package-lock.json
+      - name: SQL Server 2022 e Keycloak (Docker Compose)
+        run: |
+          cp .env.example .env
+          docker compose --env-file .env -f deploy/docker/docker-compose.yml up -d --wait
+      - name: Migrazioni e seed
+        run: |
+          set -a; . ./.env; set +a
+          dotnet run --project src/Attestia.Api --no-launch-profile -- migrate --seed
+      - name: Build Angular
+        working-directory: web/admin
+        run: npm ci && npm run build
+      - name: Avvio API (HTTPS con certificato di sviluppo)
+        run: |
+          dotnet dev-certs https
+          set -a; . ./.env; set +a
+          ASPNETCORE_ENVIRONMENT=Development nohup dotnet run --project src/Attestia.Api --launch-profile https > api.log 2>&1 &
+          for _ in $(seq 1 90); do curl -skf https://localhost:7180/health && exit 0; sleep 2; done
+          cat api.log; exit 1
+      - name: Playwright
+        working-directory: web/admin
+        run: |
+          npx playwright install --with-deps chromium
+          CI=1 npx playwright test
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: e2e-report
+          path: |
+            web/admin/playwright-report
+            web/admin/test-results
+            api.log
+
+  secrets:
+    name: Ricerca di segreti (gitleaks)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: gitleaks sull'intera cronologia
+        run: docker run --rm -v "$PWD:/repo:ro" zricethezav/gitleaks:v8.30.1 git /repo --no-banner --config /repo/.gitleaks.toml --redact
