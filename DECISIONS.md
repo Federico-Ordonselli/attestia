@@ -1,6 +1,6 @@
 # Decisioni tecniche
 
-Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci marcate ⚠️ meritano una conferma.
+Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci che richiedevano una conferma (D05, D23, D24, D30) sono state **confermate dall'autore** il 24/11/2026.
 
 ## D01 — Versioni di piattaforma
 - **Cosa**: .NET 10 (LTS, SDK 10.0.114), Angular 22.3, SQL Server 2022 (immagine `2022-latest`), Keycloak 26.8.2, Node 24.
@@ -25,7 +25,7 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 ## D05 — Regole di stato e loro unica definizione
 - **Cosa**: `ExpiresOn` è l'**ultimo giorno di validità**. `NULL` → Valid; `< oggi` → Expired; `≤ oggi + soglia` → ExpiringSoon; altrimenti Valid; corso obbligatorio senza attestati → Missing. Soglia di default 60 giorni in `dbo.AppSettings` (`ExpiringSoonDays`), sovrascrivibile per chiamata.
 - **Perché**: definizione unica in `dbo.fn_CertificateStatus` (inline TVF, quindi espansa nel piano senza costo di UDF scalare) + `fn_ComplianceMatrix` (attestato più recente per dipendente/corso). La copia C# serve all'API per stati calcolati senza round-trip (es. anteprima import) ed è vincolata da un test di parità.
-- ⚠️ **Da confermare**: "scade il 10/03" significa valido fino al 10/03 incluso. L'alternativa (scaduto dal 10/03) è un cambio di una riga in entrambe le implementazioni.
+- ✅ **Confermata**: "scade il 10/03" significa valido fino al 10/03 incluso. L'alternativa (scaduto dal 10/03) è un cambio di una riga in entrambe le implementazioni.
 
 ## D06 — "Oggi" nel fuso aziendale
 - **Cosa**: `dbo.fn_BusinessToday()` usa `AT TIME ZONE 'W. Europe Standard Time'`; in C# `IBusinessClock` usa `Europe/Rome`. Le procedure accettano `@AsOf` esplicito (l'API lo passa sempre, i test lo fissano).
@@ -103,13 +103,13 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 - **Header scritto a mano**: `Response.Cookies.Append` farebbe URL-encoding (`|` → `%7C`) e il portale classic leggerebbe byte diversi da quelli firmati. L'alfabeto del valore è ristretto a `[A-Za-z0-9|-]`.
 - **Vettore di test** calcolato con Python (indipendente da .NET), usato dai test e dalla checklist Windows per verificare l'implementazione VBScript.
 - **Perché non validare SAML in ASP classic**: VBScript non ha una libreria XML-DSig affidabile; validare firme XML (canonicalizzazione, wrapping attack) a mano sarebbe la parte più rischiosa di tutto il progetto. **Alternative valutate**: (a) Shibboleth SP come modulo IIS (robusto, ma un secondo SP da installare e configurare, e la sessione resterebbe separata dall'API); (b) reverse proxy che inietta header di identità (richiede ARR e un canale fidato tra proxy e applicazione); (c) token JWT invece di HMAC (in VBScript servirebbe comunque l'HMAC, con più parsing); (d) sessione lato server condivisa in SQL (stato in più, query a ogni pagina). L'HMAC con chiave condivisa è il minimo indispensabile, verificabile con le classi COM di .NET Framework.
-- ⚠️ **Limite noto**: chi ha la chiave può emettere sessioni; la chiave va trattata come un segreto di produzione (variabile d'ambiente dell'application pool, mai nel repository) e ruotata invalidando tutte le sessioni.
+- ✅ **Limite noto e accettato**: chi ha la chiave può emettere sessioni; la chiave va trattata come un segreto di produzione (variabile d'ambiente dell'application pool, mai nel repository) e ruotata invalidando tutte le sessioni.
 
 ## D24 — Dettagli del Service Provider
 - **InResponseTo**: l'ID dell'AuthnRequest è conservato in un cookie cifrato e a tempo (Data Protection, 10 minuti, `SameSite=None` perché l'ACS riceve un POST cross-site dall'IdP); risposte non sollecitate o per un'altra richiesta sono rifiutate. Firma, audience, issuer, validità temporale e replay sono verificati da ITfoxtec.
 - **Fiducia nel certificato**: pinning del certificato pubblicato nei metadata dell'IdP (Keycloak usa un certificato autofirmato), senza validazione di catena. I metadata sono letti alla prima richiesta e tenuti in cache un'ora.
 - **Autorizzazione al login**: oltre ai claim SAML, la matricola deve esistere ed essere attiva nel database. Il **ruolo** viene dall'IdP (fonte di verità per l'identità); la colonna `Employees.Role` è informativa.
-- **AuthnRequest non firmate** (`saml.client.signature=false` in Keycloak): firmarle richiederebbe un certificato SP da distribuire anche all'IdP; il rischio residuo (richieste di login forgiate) è basso. ⚠️ In produzione si può attivare con un certificato SP.
+- **AuthnRequest non firmate** (`saml.client.signature=false` in Keycloak): firmarle richiederebbe un certificato SP da distribuire anche all'IdP; il rischio residuo (richieste di login forgiate) è basso. ✅ Confermata per lo sviluppo; in produzione si può attivare con un certificato SP.
 - **IdP in HTTP in sviluppo** (`http://localhost:8081`): accettabile solo in locale; la sicurezza delle asserzioni sta nella firma, ma in produzione i metadata vanno letti in HTTPS.
 - **Logout**: chiude il cookie locale e invia una LogoutRequest all'IdP (NameID e SessionIndex salvati in un cookie cifrato sotto `/sso`). Gestisce sia il binding Redirect sia il POST (Keycloak con "force POST binding" usa il POST anche per il logout: scoperto provando con Keycloak reale). La LogoutResponse non viene validata: porta solo a una pagina statica, la sessione locale è già chiusa.
 - **Strumento CLI** `sso-cookie <matricola> <ruolo> [--expires-in s]`: genera cookie validi o scaduti per la checklist manuale. Non è esposto via HTTP.
@@ -151,7 +151,7 @@ Ogni voce: **cosa** si è deciso, **perché**, **alternative scartate**. Le voci
 - **Cosa**: un sito, tre applicazioni con tre pool: `/` → ASP.NET Core (serve `/api/*`, `/sso/*`, `/health`), `/portale` → ASP classic, `/admin` → Angular statico. Il `web.config` della radice usa `<location path="." inheritInChildApplications="false">`, così il gestore `aspNetCore` non viene ereditato dalle applicazioni figlie.
 - **Perché**: la specifica vuole sia `/api` sia `/sso` sull'app ASP.NET Core. Con un'applicazione IIS montata su `/api`, `/sso` non ci arriverebbe; la riscrittura verso un'altra applicazione richiederebbe ARR o lo stesso application pool. Una sola origine semplifica cookie (`Path=/`), CSRF e CORS (non serve).
 - **Scartate**: app `/api` con endpoint SSO sotto `/api/sso` (cambia i percorsi richiesti); ARR come reverse proxy (componente in più da installare).
-- ⚠️ **Da confermare**: è una deviazione dalla lettera della specifica ("applicazione /api"), non dalla sostanza (tre applicazioni, tre pool).
+- ✅ **Confermata**: è una deviazione dalla lettera della specifica ("applicazione /api"), non dalla sostanza (tre applicazioni, tre pool).
 
 ## D31 — CI (GitHub Actions)
 - Job separati: .NET (restore con NuGetAudit bloccante, build Release con warning come errori, OpenAPI allineato, `dotnet list package --vulnerable`, test con Testcontainers + TRX + copertura), Angular (client allineato al contratto, lint, Vitest, build, `npm audit`), controlli statici di portale/IIS/XSD, E2E con Docker Compose (SQL Server + Keycloak) e Playwright, gitleaks sull'intera cronologia. CodeQL (`security-extended`) per C# e TypeScript in un workflow dedicato, Dependabot per NuGet, npm e Actions.
